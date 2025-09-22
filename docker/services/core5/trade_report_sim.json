@@ -1,0 +1,21 @@
+
+{
+  "name": "CORE5 :: trade_report :: SIM :: colo2",
+  "id": "colo2-core5-trade_report-sim-1",
+  "tags": ["colo2", "core5", "sim", "trade_report"],
+  "address": "remote-host.example.com",
+  "port": 22,
+  "check": {
+    "name": "SSH Process Check",
+    "args": [
+      "ssh",
+      "-o", "ConnectTimeout=10",
+      "-o", "StrictHostKeyChecking=no",
+      "bqm-prod@10.209.110.171",
+      "pgrep -f 'python trade_report_live.py --config_path ./sim/trade_report_config.json'"
+    ],
+    "interval": "10s",
+    "timeout": "5s",
+    "status": "passing"
+  }
+}

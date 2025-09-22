@@ -1,0 +1,21 @@
+
+{
+  "name": "CORE5 :: liquidity-provision :: PROD :: colo2",
+  "id": "colo2-core5-liquidity-provision-prod-1",
+  "tags": ["colo2", "core5", "production", "liquidity-provision"],
+  "address": "remote-host.example.com",
+  "port": 22,
+  "check": {
+    "name": "SSH Process Check",
+    "args": [
+      "ssh",
+      "-o", "ConnectTimeout=10",
+      "-o", "StrictHostKeyChecking=no",
+      "bqm-prod@10.209.110.171",
+      "pgrep -f 'python liquidity_provision_live.py --config_path ./prod/liquidity_provision_config.json'"
+    ],
+    "interval": "10s",
+    "timeout": "5s",
+    "status": "passing"
+  }
+}

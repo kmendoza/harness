@@ -1,0 +1,28 @@
+{
+  "id": "testing-service-1",
+  "name": "Dead noop service",
+  "tags": ["web", "api", "v1"],
+  "address": "192.168.1.100",
+  "port": 8080,
+  "meta": {
+    "version": "1.0.0",
+    "environment": "development"
+  },
+ "Checks": [
+    {
+      "HTTP": "http://192.168.1.100:8080/health",
+      "Interval": "30s",
+      "Timeout": "5s"
+    },
+    {
+      "TCP": "192.168.1.100:8080",
+      "Interval": "10s",
+      "Timeout": "3s"
+    }
+  ],
+   "weights": {
+    "passing": 10,
+    "warning": 1
+  }
+}
+

@@ -1,0 +1,39 @@
+{
+    "version": 1,
+    "disable_existing_loggers": false,
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s - %(levelname)s - %(message)s"
+        },
+        "app-formatter": {
+            "format": "custom-logger %(name)s %(asctime)s - %(levelname)s - %(message)s"
+        }
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+            "stream": "ext://sys.stdout"
+        },
+        "app-handler": {
+            "class": "logging.StreamHandler",
+            "formatter": "app-formatter",
+            "stream": "ext://sys.stdout"
+        }
+    },
+    "loggers": {
+        "myapp": {
+            "level": "INFO",
+            "handlers": [
+                "app-handler"
+            ],
+            "propagate": false
+        },
+        "root": {
+            "level": "INFO",
+            "handlers": [
+                "console"
+            ]
+        }
+    }
+}

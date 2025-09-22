@@ -1,0 +1,21 @@
+
+{
+  "name": "CORE5 :: residual-volatility :: PROD :: colo2",
+  "id": "colo2-core5-residual-volatility-prod-1",
+  "tags": ["colo2", "core5", "production", "residual-volatility"],
+  "address": "remote-host.example.com",
+  "port": 22,
+  "check": {
+    "name": "SSH Process Check",
+    "args": [
+      "ssh",
+      "-o", "ConnectTimeout=10",
+      "-o", "StrictHostKeyChecking=no",
+      "bqm-prod@10.209.110.171",
+      "pgrep -f 'python residual_volatility_live.py --config_path ./prod/residual_volatility_config.json'"
+    ],
+    "interval": "10s",
+    "timeout": "5s",
+    "status": "passing"
+  }
+}

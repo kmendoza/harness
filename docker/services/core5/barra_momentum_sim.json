@@ -1,0 +1,21 @@
+
+{
+  "name": "CORE5 :: barra-momentum :: SIM :: colo2",
+  "id": "colo2-core5-barra-momentum-sim-1",
+  "tags": ["colo2", "core5", "sim", "barra-momentum"],
+  "address": "remote-host.example.com",
+  "port": 22,
+  "check": {
+    "name": "SSH Process Check",
+    "args": [
+      "ssh",
+      "-o", "ConnectTimeout=10",
+      "-o", "StrictHostKeyChecking=no",
+      "bqm-prod@10.209.110.171",
+      "pgrep -f 'python barra_momentum_live.py --config_path ./sim/barra_momentum_config.json'"
+    ],
+    "interval": "10s",
+    "timeout": "5s",
+    "status": "passing"
+  }
+}

@@ -1,0 +1,21 @@
+
+{
+  "name": "CORE5 :: discrete-optimizer :: PROD :: colo2",
+  "id": "colo2-core5-discrete-optimizer-prod-1",
+  "tags": ["colo2", "core5", "production", "discrete-optimizer"],
+  "address": "remote-host.example.com",
+  "port": 22,
+  "check": {
+    "name": "SSH Process Check",
+    "args": [
+      "ssh",
+      "-o", "ConnectTimeout=10",
+      "-o", "StrictHostKeyChecking=no",
+      "bqm-prod@10.209.110.171",
+      "pgrep -f 'python discrete_optimizer_live.py --config_path ./prod/discrete_optimizer_config.json'"
+    ],
+    "interval": "10s",
+    "timeout": "5s",
+    "status": "passing"
+  }
+}

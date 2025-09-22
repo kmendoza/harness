@@ -1,0 +1,21 @@
+
+{
+  "name": "CORE5 :: liquidity-provision :: SIM :: colo2",
+  "id": "colo2-core5-liquidity-provision-sim-1",
+  "tags": ["colo2", "core5", "production", "liquidity-provision"],
+  "address": "remote-host.example.com",
+  "port": 22,
+  "check": {
+    "name": "SSH Process Check",
+    "args": [
+      "ssh",
+      "-o", "ConnectTimeout=10",
+      "-o", "StrictHostKeyChecking=no",
+      "bqm-prod@10.209.110.171",
+      "pgrep -f 'python liquidity_provision_live.py --config_path ./sim/liquidity_provision_config.json'"
+    ],
+    "interval": "10s",
+    "timeout": "5s",
+    "status": "passing"
+  }
+}
