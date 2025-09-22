@@ -1,0 +1,54 @@
+services:
+  consul:
+    image: bbquant/consul:0.2.0
+    container_name: consul
+    ports:
+      - "8500:8500"  # UI and HTTP API
+      - "8600:8600/udp"  # DNS
+    networks:
+      - consul-network
+    volumes:
+      - consul_data:/bitnami/consul
+      - ./config/:/opt/bitnami/consul/conf/
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+      - CONSUL_CLIENT_LAN_ADDRESS=0.0.0.0
+      - CONSUL_DISABLE_KEYRING_FILE=true
+      - CONSUL_BOOTSTRAP_EXPECT=1
+      - CONSUL_UI=true
+      - CONSUL_HTTP_PORT_NUMBER=8500
+      - CONSUL_DNS_PORT_NUMBER=8600
+      - CONSUL_DATACENTER=dc1
+      - CONSUL_DOMAIN=consul
+      - CONSUL_RAFT_MULTIPLIER=1
+      # - CONSUL_LOCAL_CONFIG={"acl":{"enabled":true,"default_policy":"deny","enable_token_persistence":true}}
+      - CONSUL_LOCAL_CONFIG={"enable_script_checks":true}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+
+  consul-watcher:
+    image: bbquant/consul:0.2.0
+    container_name: consul-watcher
+    environment:
+      - SLACK_WEBHOOK_URL=https://hooks.slack.com/services/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
+    command: >
+      /bin/sh -c "/scripts/wait-for-consul.sh && consul watch -http-addr=http://consul:8500 -type=checks -state=critical /scripts/alert-slack-py.sh"
+    depends_on:
+      - consul
+    volumes:
+      - ./config2:/scripts
+    networks:
+      - consul-network
+
+volumes:
+  consul_data:
+    driver: local
+
+networks:
+  consul-network:
+    driver: bridge    
