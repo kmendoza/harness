@@ -1,0 +1,24 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env" :{
+                "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}/src",
+
+                "CONSUL_DATA": "[{\"Node\":\"172.19.0.2\",\"CheckID\":\"service:test-service-3\",\"Name\":\"Service 'test-service-3' check\",\"Status\":\"critical\",\"Notes\":\"\",\"Output\":\"\",\"ServiceID\":\"test-service-3\",\"ServiceName\":\"test-service-3\",\"ServiceTags\":[],\"Type\":\"ttl\",\"ExposedPort\":0,\"Definition\":{\"Interval\":\"0s\",\"Timeout\":\"0s\",\"DeregisterCriticalServiceAfter\":\"0s\",\"HTTP\":\"\",\"Header\":null,\"Method\":\"\",\"Body\":\"\",\"TLSServerName\":\"\",\"TLSSkipVerify\":false,\"TCP\":\"\",\"TCPUseTLS\":false,\"UDP\":\"\",\"GRPC\":\"\",\"OSService\":\"\",\"GRPCUseTLS\":false},\"CreateIndex\":716,\"ModifyIndex\":853}]",
+
+            }
+        }
+    ]
+}
