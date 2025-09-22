@@ -1,0 +1,45 @@
+{
+  "service": {
+    "id": "Testing service",
+    "name": "Test service X",
+    "tags": [
+      "harness",
+      "test",
+      "v1.0"
+    ],
+    "address": "172.26.229.183",
+    "port": 3000,
+    "meta": {
+      "version": "1.0.0",
+      "environment": "production",
+      "management_base_url": "http://172.26.229.183:3000",
+      "start_endpoint": "/start",
+      "stop_endpoint": "/stop", 
+      "kill_endpoint": "/kill",
+      "pause_endpoint": "/pause",
+      "restart_endpoint": "/restart",
+      "status_endpoint": "/status",
+      "heartbeat_endpoint": "/heartbeat"      
+    },
+    "checks": [
+      {
+        "id": "hb",
+        "name": "heartbeat",
+        "notes": "Harness hb endpoint. The harnes also updates the stated of managed process.",
+        "http": "http://172.26.229.183:3000/hb",
+        "interval": "20s",
+        "timeout": "1s",
+        "deregister_critical_service_after": "0s"
+      },
+      {
+        "id": "status",
+        "name": "process status",
+        "notes": "Explicit status feedback from the harnessed process.",
+        "http": "http://172.26.229.183:3000/status",
+        "interval": "30s",
+        "timeout": "3s"
+      }
+
+    ]
+  }
+}
