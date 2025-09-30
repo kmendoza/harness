@@ -21,7 +21,7 @@ class GitRepo:
         branch: str = "main",
         workdir: str | Path | None = None,
         depth: int | None = None,
-        smart_update: bool = True,
+        always_clone: bool = False,
     ):
         self._repo_url = repo_url
         self._branch = branch
@@ -29,17 +29,19 @@ class GitRepo:
         self._repo_name = repo_url.split("/")[-1].replace(".git", "")
         self._repo_dir = self._work_dir / self._repo_name
         self._depth = depth
-        self._smart_update = smart_update
+        self._force_clone = always_clone
         self._cloned = False
-        self._repo = None
         
-        if smart_update:
-            self.__smart_clone_or_update()
+        if not always_clone:
+            self._repo = self.__checkout_or_clone()
         else:
-            self.__clone()
+            self._repo = self.__clone()
 
-    def __smart_clone_or_update(self) -> git.Repo:
-        """Smart handler: clone if needed, update if repo exists"""
+    def __checkout_or_clone(self) -> git.Repo:
+        '''
+        If directory exists, check if 
+        '''
+
         logger.info(f"Smart checkout of repo: {self._repo_url}")
         
         self._work_dir.mkdir(parents=True, exist_ok=True)
@@ -49,41 +51,42 @@ class GitRepo:
             logger.info(f"Repository exists at {self._repo_dir}")
             
             try:
-                self._repo = git.Repo(self._repo_dir)
                 
                 # Verify remote URL matches
-                if not self.__verify_remote_url():
-                    logger.warning("Remote URL mismatch - will re-clone")
-                    shutil.rmtree(self._repo_dir)
-                    return self.__clone()
+                existing_repo = git.Repo(self._repo_dir)
+                if not self.__verify_remote_url(existing_repo):
+                    msg = f"❌ Target directory {self._repo_dir} exists but already has another repo checkout - fix manually"
+                    logger.warning(msg)
+                    raise GitOperatorError(msg)
                 
                 # Update existing repo
+                self._repo = existing_repo
                 return self.__update_existing_repo()
                 
             except git.InvalidGitRepositoryError:
-                logger.warning(f"Directory exists but is not a valid git repository - will re-clone")
-                shutil.rmtree(self._repo_dir)
-                return self.__clone()
+                msg = f"❌Directory {self._repo_dir} exists but is not a valid git repository - fix manually"
+                logger.warning(msg)
+                raise GitOperatorError(msg)
         else:
             # Clone fresh
             return self.__clone()
 
-    def __verify_remote_url(self) -> bool:
+    def __verify_remote_url(self, repo:git.Repo) -> bool:
         """Verify the local repo's remote URL matches expected URL"""
         try:
-            if not self._repo.remotes:
+            if not repo.remotes:
                 return False
             
-            local_url = self._repo.remotes.origin.url
+            local_url = repo.remotes.origin.url
             
             # Normalize URLs for comparison (handle .git suffix)
             def normalize_url(url: str) -> str:
                 return url.rstrip('/').replace('.git', '')
             
             if normalize_url(local_url) != normalize_url(self._repo_url):
-                logger.warning(f"Remote URL mismatch:")
-                logger.warning(f"  Local: {local_url}")
-                logger.warning(f"  Expected: {self._repo_url}")
+                logger.warning(f"📛 local and remote URL mismatch:")
+                logger.warning(f"  local url: {local_url}")
+                logger.warning(f"  expeected: {self._repo_url}")
                 return False
             
             return True
@@ -130,15 +133,15 @@ class GitRepo:
                 if merge_base and merge_base[0] == local_commit:
                     logger.info(f"Local branch is behind remote. Pulling changes...")
                     origin.pull(self._branch)
-                    logger.info(f"✓ Repository updated successfully")
-                    logger.info(f"Current commit: {self._repo.head.commit.hexsha[:8]} - {self._repo.head.commit.message.strip()}")
+                    logger.info(f"✅ Repository updated successfully")
+                    logger.info(f"🚀 Current commit: {self._repo.head.commit.hexsha[:8]} - {self._repo.head.commit.message.strip()}")
                 else:
                     logger.warning("Local branch has diverged from remote")
-                    logger.warning("Performing hard reset to remote branch")
+                    logger.warning("⭕ Performing hard reset to remote branch")
                     self._repo.head.reset(remote_commit, index=True, working_tree=True)
-                    logger.info("✓ Repository reset to remote state")
+                    logger.info("🚀 Repository reset to remote state")
             else:
-                logger.info("✓ Repository is already up-to-date")
+                logger.info("🚀 Repository is already up-to-date")
             
             self._cloned = True
             return self._repo
@@ -153,11 +156,22 @@ class GitRepo:
         """Clone repository fresh (original behavior)"""
         logger.info(f"Cloning repo: {self._repo_url}")
 
-        self._work_dir.mkdir(parents=True, exist_ok=True)
-
+        # if repo target directory exists 
         if self._repo_dir.exists():
-            shutil.rmtree(self._repo_dir)
-
+            # check that this is a git repo and that it matches the repo we are trying to check ou
+            repo_config = self._repo_dir /'.git'/'config'
+            if repo_config.exists():
+                if self.__verify_remote_url(git.Repo(self._repo_dir)):
+                    logger.warning(f'Target locataion is already a git repo but url is the same as your target url : {self._repo_url} ')
+                    logger.warning(f'⭕ Deleting local repo dir: {self._repo_dir} ')
+                    shutil.rmtree(self._repo_dir)
+                else:
+                    msg = f"❌ Target directory {self._repo_dir} exists but already has another repo checkout - fix manually"
+                    logger.warning(msg)
+                    raise GitOperatorError(msg)
+        else:
+            self._work_dir.mkdir(parents=True, exist_ok=True)
+    
         try:
             logger.info(f"Cloning {self._repo_url} (branch: {self._branch})")
             self._repo = git.Repo.clone_from(
@@ -169,8 +183,8 @@ class GitRepo:
             
             self._cloned = True
 
-            logger.info(f"Repository cloned to: {self._repo_dir}")
-            logger.info(f"Current commit: {self._repo.head.commit.hexsha[:8]} - {self._repo.head.commit.message.strip()}")
+            logger.info(f"✅ Repository cloned to: {self._repo_dir}")
+            logger.info(f"🚀 Current commit: {self._repo.head.commit.hexsha[:8]} - {self._repo.head.commit.message.strip()}")
 
             return self._repo
 
@@ -287,7 +301,7 @@ if __name__ == "__main__":
         repo_url="git@github.com:kmendoza/harness_test.git",
         branch="test-branch",
         workdir="/data/tst/",
-        smart_update=True,  # Smart mode: reuse existing repo if possible
+        always_clone=False,
     )
     repo.print_info()
     
