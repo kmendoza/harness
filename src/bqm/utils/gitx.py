@@ -28,6 +28,7 @@ class GitRepo:
         self._repo_name = repo_url.split("/")[-1].replace(".git", "")
         self._repo_dir = self._work_dir / self._repo_name
         self._depth = depth
+        self._cloned = False
         self.__clone()
 
     def __clone(self) -> git.Repo:
@@ -47,6 +48,8 @@ class GitRepo:
                 branch=self._branch,
                 depth=self._depth,
             )
+            
+            self._cloned = True
 
             logger.info(f"Repository cloned to: {self._repo_dir}")
             logger.info(f"Current commit: {self._repo.head.commit.hexsha[:8]} - {self._repo.head.commit.message.strip()}")
@@ -117,8 +120,8 @@ class GitRepo:
 if __name__ == "__main__":
 
     repo = GitRepo(
-        repo_url="git@bitbucket.org:bqmrepo/harness.git",
-        branch="cleanup_creation",
+        repo_url="git@github.com:kmendoza/harness_test.git",
+        #repo_url="git@bitbucket.org:bqmrepo/harness.git",
         workdir="/tmp/",
     )
     repo.print_info()
