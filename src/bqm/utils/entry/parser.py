@@ -160,7 +160,7 @@ class EntryPointParser:
         return sorted(entry_points, key=lambda x: x["priority"])
 
 
-if __name__ == "__main__":
-    ep = EntryPointParser()
-    analysis = ep.analyze_file("/home/iztok/work/trading/harness/tests/cradle_test_consul.py")
-    pass
+# if __name__ == "__main__":
+#     ep = EntryPointParser()
+#     analysis = ep.analyze_file("/home/iztok/work/trading/harness/tests/cradle_test_consul.py")
+#     pass
