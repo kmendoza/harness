@@ -100,7 +100,7 @@ class GitRepo:
         try:
             origin = self._repo.remotes.origin
             
-            logger.info(f"Fetching latest changes from remote...")
+            logger.info(f"⁉️  Fetching latest changes from remote...")
             origin.fetch()
             
             # Check if desired branch exists locally
@@ -131,13 +131,14 @@ class GitRepo:
                 merge_base = self._repo.merge_base(local_commit, remote_commit)
                 
                 if merge_base and merge_base[0] == local_commit:
-                    logger.info(f"Local branch is behind remote. Pulling changes...")
+                    logger.info(f"⬇️ Local branch is behind remote. Pulling changes...")
                     origin.pull(self._branch)
                     logger.info(f"✅ Repository updated successfully")
                     logger.info(f"🚀 Current commit: {self._repo.head.commit.hexsha[:8]} - {self._repo.head.commit.message.strip()}")
                 else:
                     logger.warning("Local branch has diverged from remote")
-                    logger.warning("⭕ Performing hard reset to remote branch")
+                    logger.warning("⭕ Performing hard reset to remote branch.")
+                    logger.warning("🗑️ Overwriting local changes.")
                     self._repo.head.reset(remote_commit, index=True, working_tree=True)
                     logger.info("🚀 Repository reset to remote state")
             else:
