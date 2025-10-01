@@ -22,6 +22,7 @@ class GitRepo:
         workdir: str | Path | None = None,
         depth: int | None = None,
         always_clone: bool = False,
+        offline_ok: bool = False,
     ):
         self._repo_url = repo_url
         self._branch = branch
@@ -30,13 +31,47 @@ class GitRepo:
         self._repo_dir = self._work_dir / self._repo_name
         self._depth = depth
         self._force_clone = always_clone
+        self._offline_ok = not always_clone and offline_ok
         self._cloned = False
         
-        if not always_clone:
-            self._repo = self.__checkout_or_clone()
+        if not self.__check_connection():
+            existing_repo = self.__examine_offline_repo()
+            if self._offline_ok and existing_repo:
+                logger.warning(f'🪂  OK. running in OFFLINE mode')
+                self._repo = existing_repo
+            else:
+                msg = '❌  ERROR. No connection and unable to use offline mode.'
+                logger.error(msg)
+                raise GitOperatorError(msg)
         else:
-            self._repo = self.__clone()
+            if not always_clone:
+                self._repo = self.__checkout_or_clone()
+            else:
+                self._repo = self.__clone()
 
+
+    def __check_connection(self) -> bool:
+        try:
+            git.cmd.Git().ls_remote(self._repo_url)
+            logger.info(f'✅  Remote repo {self._repo_url} is reachabble')
+            return True
+        except git.exc.GitCommandError as gce:
+            logger.warning(f'⚡ Remote repo {self._repo_url} is not reachabble')
+            return False
+ 
+    def __examine_offline_repo(self) -> bool:
+        '''
+        when no connection, check if the local repo exists and is a clone of remote
+        '''
+        if self._repo_dir.exists() and (self._repo_dir / '.git').exists():
+            logger.info(f"Repository exists at {self._repo_dir}")
+            
+            existing_repo = git.Repo(self._repo_dir)
+            if self.__verify_remote_url(existing_repo):
+                return existing_repo
+            
+        return None
+        
     def __checkout_or_clone(self) -> git.Repo:
         '''
         If directory exists, check if 
