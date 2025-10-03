@@ -3,7 +3,7 @@ from typing import Any
 import sys
 
 from bqm.utils.logconfig import init_logging, make_logger
-from bqm.utils.git_delete import GitRepo
+from bqm.utils.gitx import GitRepo
 from bqm.harness.conf.service_config import ServiceConfig
 from bqm.utils.entry.parser import EntryPointParser
 

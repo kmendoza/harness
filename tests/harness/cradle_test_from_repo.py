@@ -4,10 +4,13 @@ from bqm.harness import RepoLauncher
 RepoLauncher(
     config={
         "source": {
-            "repo": "git@bitbucket.org:bqmrepo/harness.git",
-            "branch": "cleanup_creation",
+            "repo": "git@github.com:kmendoza/harness_test.git",
+            "branch": "test-branch",
             "workdir": "/tmp/",
+            "root-subfolder":"/src",
+            "file-to-run":"main.py",
         },
+       
         "harness": {
             "interface": "0.0.0.0",
             "port": 3000,

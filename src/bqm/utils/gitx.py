@@ -23,6 +23,7 @@ class GitRepo:
         depth: int | None = None,
         always_clone: bool = False,
         offline_ok: bool = False,
+        force_offline: bool = False,
     ):
         self._repo_url = repo_url
         self._branch = branch
@@ -33,21 +34,30 @@ class GitRepo:
         self._force_clone = always_clone
         self._offline_ok = not always_clone and offline_ok
         self._cloned = False
-        
-        if not self.__check_connection():
-            existing_repo = self.__examine_offline_repo()
-            if self._offline_ok and existing_repo:
-                logger.warning(f'🪂  OK. running in OFFLINE mode')
-                self._repo = existing_repo
-            else:
-                msg = '❌  ERROR. No connection and unable to use offline mode.'
-                logger.error(msg)
-                raise GitOperatorError(msg)
+        self._force_offline = force_offline
+
+        if self._force_offline:
+            self._repo = self.get_offline_repo()
+
+        if not self.__check_connection() and self._offline_ok:
+            self._repo = self.get_offline_repo()
         else:
             if not always_clone:
                 self._repo = self.__checkout_or_clone()
             else:
                 self._repo = self.__clone()
+
+
+
+    def get_offline_repo(self) -> git.Repo:
+        existing_repo = self.__examine_offline_repo()
+        if self._offline_ok and existing_repo:
+            logger.warning(f'🪂  OK. running in OFFLINE mode')
+            return existing_repo
+        else:
+            msg = '❌  ERROR. No connection and unable to use offline mode.'
+            logger.error(msg)
+            raise GitOperatorError(msg)
 
 
     def __check_connection(self) -> bool:
