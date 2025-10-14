@@ -38,8 +38,8 @@ class GitRepo:
 
         if self._force_offline:
             self._repo = self.get_offline_repo()
-
-        if not self.__check_connection() and self._offline_ok:
+            logger.info(f"🚀  Using a local clone of repo: {self._repo_url}. Commit: {self._repo.head.commit.hexsha[:8]} - {self._repo.head.commit.message.strip()}")
+        elif not self.__check_connection() and self._offline_ok:
             self._repo = self.get_offline_repo()
         else:
             if not always_clone:
@@ -48,11 +48,10 @@ class GitRepo:
                 self._repo = self.__clone()
 
 
-
     def get_offline_repo(self) -> git.Repo:
         existing_repo = self.__examine_offline_repo()
-        if self._offline_ok and existing_repo:
-            logger.warning(f'🪂  OK. running in OFFLINE mode')
+        if existing_repo:
+            logger.info(f'✅  OK. running in OFFLINE mode')
             return existing_repo
         else:
             msg = '❌  ERROR. No connection and unable to use offline mode.'
@@ -147,7 +146,7 @@ class GitRepo:
             
             logger.info(f"⁉️  Fetching latest changes from remote...")
             origin.fetch()
-            
+
             # Check if desired branch exists locally
             if self._branch not in self._repo.heads:
                 logger.info(f"Creating local branch '{self._branch}' to track remote")
@@ -347,7 +346,8 @@ if __name__ == "__main__":
         repo_url="git@github.com:kmendoza/harness_test.git",
         branch="test-branch",
         workdir="/data/tst/",
-        always_clone=False,
+        #always_clone=False,
+        force_offline=True,
     )
     repo.print_info()
     

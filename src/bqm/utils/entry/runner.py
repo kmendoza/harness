@@ -3,6 +3,8 @@ import importlib
 import sys
 from bqm.utils.logconfig import make_logger
 from bqm.utils.entry.parser import EntryPointParser
+from bqm.utils.entry.wrapper import EntryPointExtender
+
 
 logger = make_logger(__name__)
 
@@ -31,7 +33,7 @@ class EntryPointRunner:
         for entry_point in analysis["entry_points"]:
             print(f"  Creating wrapper for: {entry_point['description']}")
             try:
-                wrapper_class = self.extender.create_wrapper_class(entry_point, module)
+                wrapper_class = EntryPointExtender.create_wrapper_class(entry_point, module)
                 wrapper_classes.append(wrapper_class)
             except Exception as e:
                 print(f"    Failed to create wrapper: {e}")
@@ -63,5 +65,9 @@ class EntryPointRunner:
 
 if __name__ == "__main__":
     epr = EntryPointRunner()
-    epr.analyze_and_prepare("/home/iztok/work/trading/harness/tests/dynamic_launcher/arbitrary_function.py")
-    pass
+    module, eps = epr.analyze_and_prepare("/home/iztok/work/hwork/harness/tests/dynamic_launcher/arbitrary_function.py")
+    for ep in eps:
+        wrapper = ep()
+        logger.info(wrapper.get_info())
+        res = wrapper()
+        pass

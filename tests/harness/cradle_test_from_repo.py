@@ -6,9 +6,10 @@ RepoLauncher(
         "source": {
             "repo": "git@github.com:kmendoza/harness_test.git",
             "branch": "test-branch",
-            "workdir": "/tmp/",
-            "root-subfolder":"/src",
-            "file-to-run":"main.py",
+            "use-local": True,
+            "workdir": "/data/tmp/",
+            "src-subfolder":"src",
+            "file-to-run":"module/main.py",
         },
        
         "harness": {
