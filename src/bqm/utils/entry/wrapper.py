@@ -50,7 +50,7 @@ class EntryPointExtender:
             return EntryPointExtender._create_function_wrapper(entry_point, module)
         elif entry_type == 'main_block':
             return EntryPointExtender._create_main_block_wrapper(entry_point, module)
-        elif entry_type == 'class':
+        elif entry_type == 'callable_class':
             return EntryPointExtender._create_class_wrapper(entry_point, module)
         else:
             raise ValueError(f"Unknown entry point type: {entry_type}")
@@ -154,7 +154,7 @@ class EntryPointExtender:
                 instance = self.wrapped_class(*args, **kwargs)
                 # If the instance is callable, return a callable wrapper
                 if hasattr(instance, '__call__') or hasattr(instance, 'main'):
-                    return instance
+                    return instance()
                 return instance
             
             def __repr__(self):

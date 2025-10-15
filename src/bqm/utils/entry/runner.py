@@ -9,21 +9,19 @@ from bqm.utils.entry.wrapper import EntryPointExtender
 logger = make_logger(__name__)
 
 
-class EntryPointRunner:
-    def __init__(self):
-        self.analyser = EntryPointParser()
+class EntryPointScanner:
 
-    def analyze_and_prepare(self, python_file: str) -> tuple[types.ModuleType, list[type]]:
+    def scan(self, python_file: str) -> tuple[types.ModuleType, list[type]]:
         """Analyze file and prepare wrapper classes"""
 
         # Analyze the file
-        analysis = self.analyser.analyze_file(python_file)
+        analysis = EntryPointParser().analyze_file(python_file)
 
-        print(f"Analysis of {python_file}:")
-        print(f"  Has main block: {analysis['has_main_block']}")
-        print(f"  Functions: {len(analysis['functions'])}")
-        print(f"  Classes: {len(analysis['classes'])}")
-        print(f"  Entry points found: {len(analysis['entry_points'])}")
+        logger.info(f"Analysis of {python_file}:")
+        logger.info(f"  Has main block: {analysis['has_main_block']}")
+        logger.info(f"  Functions: {len(analysis['functions'])}")
+        logger.info(f"  Classes: {len(analysis['classes'])}")
+        logger.info(f"  Entry points found: {len(analysis['entry_points'])}")
 
         # Load the module
         module = self._load_module(python_file)
@@ -31,12 +29,12 @@ class EntryPointRunner:
         # Create wrapper classes for each entry point
         wrapper_classes = []
         for entry_point in analysis["entry_points"]:
-            print(f"  Creating wrapper for: {entry_point['description']}")
+            logger.info(f"  Creating wrapper for: {entry_point['description']}")
             try:
                 wrapper_class = EntryPointExtender.create_wrapper_class(entry_point, module)
                 wrapper_classes.append(wrapper_class)
             except Exception as e:
-                print(f"    Failed to create wrapper: {e}")
+                logger.error(f"    Failed to create wrapper: {e}")
 
         return module, wrapper_classes
 
@@ -64,8 +62,8 @@ class EntryPointRunner:
 
 
 if __name__ == "__main__":
-    epr = EntryPointRunner()
-    module, eps = epr.analyze_and_prepare("/home/iztok/work/hwork/harness/tests/dynamic_launcher/arbitrary_function.py")
+    epr = EntryPointScanner()
+    module, eps = epr.scan("/home/iztok/work/hwork/harness/tests/dynamic_launcher/arbitrary_function.py")
     for ep in eps:
         wrapper = ep()
         logger.info(wrapper.get_info())

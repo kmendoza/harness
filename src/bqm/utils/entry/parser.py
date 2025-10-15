@@ -7,7 +7,8 @@ logger = make_logger(__name__)
 
 
 class EntryPointParser:
-    def __init__(self):
+
+    def _wipe(self):
         self.entry_points = []
         self.classes = []
         self.functions = []
@@ -16,6 +17,8 @@ class EntryPointParser:
 
     def analyze_file(self, filename: str) -> dict[str, Any]:
         """Analyze a Python file to find entry points"""
+
+        self._wipe()
         with open(filename, "r", encoding="utf-8") as file:
             content = file.read()
 
@@ -101,7 +104,13 @@ class EntryPointParser:
 
     def _analyze_top_level_call(self, node: ast.Call):
         if isinstance(node.func, ast.Name):
-            self.top_level_calls.append({"function": node.func.id, "args": len(node.args), "keywords": len(node.keywords)})
+            self.top_level_calls.append(
+                {
+                    "function": node.func.id,
+                    "args": len(node.args),
+                    "keywords": len(node.keywords),
+                }
+            )
 
     def _determine_entry_points(self) -> list[dict[str, Any]]:
         """Determine the best entry points"""
@@ -109,7 +118,14 @@ class EntryPointParser:
 
         # Priority 1: Main block exists
         if self.has_main_block:
-            entry_points.append({"type": "main_block", "name": "__main__", "priority": 1, "description": "Standard __main__ block"})
+            entry_points.append(
+                {
+                    "type": "main_block",
+                    "name": "__main__",
+                    "priority": 1,
+                    "description": "Standard __main__ block",
+                }
+            )
 
         # Priority 2: Main-like functions
         for func in self.functions:
@@ -141,7 +157,12 @@ class EntryPointParser:
         # Priority 4: Top-level calls
         for call in self.top_level_calls:
             entry_points.append(
-                {"type": "top_level_call", "name": call["function"], "priority": 4, "description": f"Top-level call: {call['function']}()"}
+                {
+                    "type": "top_level_call",
+                    "name": call["function"],
+                    "priority": 4,
+                    "description": f"Top-level call: {call['function']}()",
+                }
             )
 
         # Priority 5: Any function without args

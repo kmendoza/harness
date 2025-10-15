@@ -34,5 +34,9 @@ class bar:
     def __call__(self,*args,**kwargs):
         print('Callable class as entry point')
 
+# def some_func():
+#     print('Some functions as entry point')
+
+
 # if __name__ == "__main__":
-#     print(12334)
+#     print('__main__ as entry point')

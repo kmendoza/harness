@@ -5,7 +5,7 @@ import sys
 from bqm.utils.logconfig import init_logging, make_logger
 from bqm.utils.gitx import GitRepo
 from bqm.harness.conf.service_config import ServiceConfig
-from bqm.utils.entry.runner import EntryPointRunner
+from bqm.utils.entry.runner import EntryPointScanner
 
 logger = make_logger(__name__)
 
@@ -53,8 +53,8 @@ class CallableRepoLauncherClass(type):
             )
 
         sys.path.insert(0, checkout_path.as_posix())
-        epr = EntryPointRunner()
-        eps = epr.analyze_and_prepare(src_path)
+        epr = EntryPointScanner()
+        eps = epr.scan(src_path)
         # ep = EntryPointParser()
         # ep.analyze_and_prepare("/home/iztok/work/trading/harness/tests/dynamic_launcher/arbitrary_function.py")
 
