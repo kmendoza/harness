@@ -6,6 +6,7 @@ from bqm.utils.logconfig import init_logging, make_logger
 from bqm.utils.gitx import GitRepo
 from bqm.harness.conf.service_config import ServiceConfig
 from bqm.utils.entry.runner import EntryPointScanner
+from bqm.utils.entry.wrapper import CallableWrapper
 
 logger = make_logger(__name__)
 
@@ -15,6 +16,17 @@ class CallableRepoLauncherClassError(Exception):
 
 
 class CallableRepoLauncherClass(type):
+
+    @classmethod
+    def select_entry_point(cls, entry_points: list[type[CallableWrapper]]):
+        for ep_type in entry_points:
+            ep_instance = ep_type()
+            logger.info(f"Found viable entry point : {ep_instance.get_info()}")
+        if len(entry_points) < 1:
+            raise CallableRepoLauncherClassError(
+                f"Inferred root source path does not exist: 1. Most likely the root_subfolder "
+            )
+
     def __call__(
         cls,
         config: dict[str, Any] | Path | str | None = None,
@@ -49,12 +61,15 @@ class CallableRepoLauncherClass(type):
         # src_path = Path(src_conf["workdir"]) / 'harness_test' / subfolder / target_file
         if not src_path.exists():
             raise CallableRepoLauncherClassError(
-                f"Inferred root source path does not exist: {src_path}. Most likely the root_subfolder {subfolder} does not exist within the repo {src_conf['repo']} "
+                f"Inferred root source path does not exist: {src_path}. Most likely the root_subfolder "
+                f"{subfolder} does not exist within the repo {src_conf['repo']} "
             )
 
         sys.path.insert(0, checkout_path.as_posix())
         epr = EntryPointScanner()
-        eps = epr.scan(src_path)
+        _, entry_points = epr.scan(src_path)
+        ep = cls.select_entry_point(entry_points)
+
         # ep = EntryPointParser()
         # ep.analyze_and_prepare("/home/iztok/work/trading/harness/tests/dynamic_launcher/arbitrary_function.py")
 

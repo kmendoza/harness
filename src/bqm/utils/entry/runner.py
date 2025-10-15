@@ -4,6 +4,7 @@ import sys
 from bqm.utils.logconfig import make_logger
 from bqm.utils.entry.parser import EntryPointParser
 from bqm.utils.entry.wrapper import EntryPointExtender
+from bqm.utils.entry.wrapper import CallableWrapper
 
 
 logger = make_logger(__name__)
@@ -11,7 +12,7 @@ logger = make_logger(__name__)
 
 class EntryPointScanner:
 
-    def scan(self, python_file: str) -> tuple[types.ModuleType, list[type]]:
+    def scan(self, python_file: str) -> tuple[types.ModuleType, list[type[CallableWrapper]]]:
         """Analyze file and prepare wrapper classes"""
 
         # Analyze the file
@@ -29,7 +30,7 @@ class EntryPointScanner:
         # Create wrapper classes for each entry point
         wrapper_classes = []
         for entry_point in analysis["entry_points"]:
-            logger.info(f"  Creating wrapper for: {entry_point['description']}")
+            #logger.info(f"  Creating wrapper for: {entry_point['description']}")
             try:
                 wrapper_class = EntryPointExtender.create_wrapper_class(entry_point, module)
                 wrapper_classes.append(wrapper_class)
@@ -61,11 +62,11 @@ class EntryPointScanner:
         return module
 
 
-if __name__ == "__main__":
-    epr = EntryPointScanner()
-    module, eps = epr.scan("/home/iztok/work/hwork/harness/tests/dynamic_launcher/arbitrary_function.py")
-    for ep in eps:
-        wrapper = ep()
-        logger.info(wrapper.get_info())
-        res = wrapper()
-        pass
+# if __name__ == "__main__":
+#     epr = EntryPointScanner()
+#     module, eps = epr.scan("/home/iztok/work/hwork/harness/tests/dynamic_launcher/arbitrary_function.py")
+#     for ep in eps:
+#         wrapper = ep()
+#         logger.info(wrapper.get_info())
+#         res = wrapper(**{'a':1})
+#         pass

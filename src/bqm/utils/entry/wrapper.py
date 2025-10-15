@@ -14,6 +14,8 @@ import inspect
 from typing import Any
 from abc import ABC, abstractmethod
 
+class EntryPointExtenderError(Exception):
+    pass
 
 class CallableWrapper(ABC):
     """Base class for all entry point wrappers"""
@@ -144,29 +146,30 @@ class EntryPointExtender:
             """Wrapper for class entry point"""
             
             def __init__(self):
-                self.entry_point = entry_point
-                self.wrapped_class = cls
-                self.name = class_name
-                self.description = entry_point.get('description', f"Class: {class_name}")
+                self._entry_point = entry_point
+                self._wrapped_class = cls
+                self._class_name = class_name
+                self._description = entry_point.get('description', f"Class: {class_name}")
             
             def __call__(self, *args, **kwargs):
                 """Instantiate the class and optionally call it"""
-                instance = self.wrapped_class(*args, **kwargs)
+                instance = self._wrapped_class()
                 # If the instance is callable, return a callable wrapper
-                if hasattr(instance, '__call__') or hasattr(instance, 'main'):
-                    return instance()
-                return instance
+                if hasattr(instance, '__call__'):
+                    return instance(*args, **kwargs)
+                else:
+                    raise EntryPointExtenderError(f'ERROR. Wrappeed class {self._class_name} must have the __call__ method implementation.')
             
             def __repr__(self):
-                return f"<ClassWrapper: {self.name}>"
+                return f"<ClassWrapper: {self._class_name}>"
             
             def get_info(self) -> dict[str, Any]:
                 """Get information about this entry point"""
                 return {
                     'type': 'class',
-                    'name': self.name,
-                    'description': self.description,
-                    'docstring': inspect.getdoc(self.wrapped_class)
+                    'name': self._class_name,
+                    'description': self._description,
+                    'docstring': inspect.getdoc(self._wrapped_class)
                 }
         
         return ClassWrapper
