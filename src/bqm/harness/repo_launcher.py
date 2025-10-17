@@ -18,13 +18,33 @@ class CallableRepoLauncherClassError(Exception):
 class CallableRepoLauncherClass(type):
 
     @classmethod
-    def select_entry_point(cls, entry_points: list[type[CallableWrapper]]):
+    def select_entry_point(
+        cls, entry_points: list[type[CallableWrapper]], tgt_entry_pt: str | None
+    ):
+        ep_instances = {}
         for ep_type in entry_points:
             ep_instance = ep_type()
-            logger.info(f"Found viable entry point : {ep_instance.get_info()}")
-        if len(entry_points) < 1:
-            raise CallableRepoLauncherClassError(
-                f"Inferred root source path does not exist: 1. Most likely the root_subfolder "
+            ep_info = ep_instance.get_info()
+            ep_instances[ep_info["name"]] = ep_instance
+            logger.info(f"➡️  Found viable entry point : {ep_info}")
+
+        # if EP was named and exists, done...
+        if tgt_entry_pt in ep_instances:
+            logger.info(f"🚀  Looking for entry point {tgt_entry_pt}. Found it!")
+            return ep_instances[tgt_entry_pt]
+
+        # if __main__ in entry points ...
+        if "__main__" in ep_instances:
+            logger.info(f"🚀  No Entry point specified. Found __main__!")
+            return ep_instances["__main__"]
+
+        if len(entry_points) == 1:
+            ep = ep_instances.keys()[0]
+            logger.info(f"🚀  No entry point specified. __main__ not found. Found a single entry point: {ep}!")
+            return ep_instances[ep]
+        
+        raise CallableRepoLauncherClassError(
+                f"Expected esactly 1 entry point. got {len(entry_points)} "
             )
 
     def __call__(
@@ -55,6 +75,7 @@ class CallableRepoLauncherClass(type):
         # create path to source within the repo
         subfolder = src_conf.get("src-subfolder", ".")
         target_file = src_conf["file-to-run"]
+        target_entry_point = src_conf.get("entry_point", None)
 
         checkout_path = repo.local_dir() / subfolder
         src_path = checkout_path / target_file
@@ -68,7 +89,7 @@ class CallableRepoLauncherClass(type):
         sys.path.insert(0, checkout_path.as_posix())
         epr = EntryPointScanner()
         _, entry_points = epr.scan(src_path)
-        ep = cls.select_entry_point(entry_points)
+        ep = cls.select_entry_point(entry_points, target_entry_point)
 
         # ep = EntryPointParser()
         # ep.analyze_and_prepare("/home/iztok/work/trading/harness/tests/dynamic_launcher/arbitrary_function.py")

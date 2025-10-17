@@ -10,6 +10,7 @@ RepoLauncher(
             "workdir": "/data/tmp/",
             "src-subfolder":"src",
             "file-to-run":"module/main.py",
+            "entry-point":"__main__",
         },
        
         "harness": {
