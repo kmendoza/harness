@@ -75,7 +75,7 @@ class CallableRepoLauncherClass(type):
         # create path to source within the repo
         subfolder = src_conf.get("src-subfolder", ".")
         target_file = src_conf["file-to-run"]
-        target_entry_point = src_conf.get("entry_point", None)
+        target_entry_point = src_conf.get("entry-point", None)
 
         checkout_path = repo.local_dir() / subfolder
         src_path = checkout_path / target_file
@@ -86,16 +86,15 @@ class CallableRepoLauncherClass(type):
                 f"{subfolder} does not exist within the repo {src_conf['repo']} "
             )
 
+        # insesrt the root of the checked out source into python path
         sys.path.insert(0, checkout_path.as_posix())
         epr = EntryPointScanner()
         _, entry_points = epr.scan(src_path)
-        ep = cls.select_entry_point(entry_points, target_entry_point)
+        selected_entry_point  = cls.select_entry_point(entry_points, target_entry_point)
 
-        # ep = EntryPointParser()
-        # ep.analyze_and_prepare("/home/iztok/work/trading/harness/tests/dynamic_launcher/arbitrary_function.py")
-
-        pass
-
+        logger.info('STARTING target process')
+        selected_entry_point()
+        logger.info('FINISHED target process')
 
 class RepoLauncher(metaclass=CallableRepoLauncherClass):
     pass
