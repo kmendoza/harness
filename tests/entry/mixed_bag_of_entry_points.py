@@ -1,5 +1,6 @@
 import time
 
+from bqm.harness import Cradle
 from bqm.utils.logconfig import make_logger
 
 logger = make_logger(__name__)
@@ -32,7 +33,16 @@ def foo(self, *args):
 
 
 class bar:
+    def __call__(self, *args, **kwargs):
+        print("Callable class as entry point")
 
+
+class bar2:
+    def __call__(self, *args, **kwargs):
+        print("Callable class as entry point")
+
+
+class LeJob(Cradle):
     def __call__(self, *args, **kwargs):
         print("Callable class as entry point")
 

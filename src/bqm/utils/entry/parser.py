@@ -120,6 +120,18 @@ class EntryPointParser:
         """Determine the best entry points"""
         entry_points = []
 
+        # Priority 0: Cradle impls
+        for cls in self.classes:
+            if cls["is_cradle"]:
+                entry_points.append(
+                    {
+                        "type": "cradle_class",
+                        "name": cls["name"],
+                        "priority": 0,
+                        "description": f"Cradle implementation class: {cls['name']}",
+                    }
+                )
+
         # Priority 1: Main block exists
         if self.has_main_block:
             entry_points.append(
@@ -185,7 +197,7 @@ class EntryPointParser:
         return sorted(entry_points, key=lambda x: x["priority"])
 
 
-# if __name__ == "__main__":
-#     ep = EntryPointParser()
-#     analysis = ep.analyze_file("/home/iztok/work/hwork/harness/tests/harness/launch_cradle_class_test.py")
-#     pass
+if __name__ == "__main__":
+    ep = EntryPointParser()
+    analysis = ep.analyze_file("/home/iztok/work/hwork/harness/tests/entry/mixed_bag_of_entry_points.py")
+    pass
