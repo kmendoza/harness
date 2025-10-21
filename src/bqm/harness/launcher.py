@@ -3,10 +3,10 @@ import sys
 from pathlib import Path
 from typing import Any, Callable
 
+from bqm.harness.conf.service_config import ServiceConfig
 from bqm.harness.cradle import Cradle
 from bqm.harness.proc_impl import ProcessHarness
 from bqm.utils.logconfig import init_logging, make_logger
-from bqm.harness.conf.service_config import ServiceConfig
 
 logger = make_logger(__name__)
 

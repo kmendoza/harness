@@ -1,12 +1,13 @@
+import sys
 from pathlib import Path
 from typing import Any
-import sys
 
-from bqm.utils.logconfig import init_logging, make_logger
-from bqm.utils.gitx import GitRepo
 from bqm.harness.conf.service_config import ServiceConfig
+from bqm.harness.launcher import Launcher
 from bqm.utils.entry.runner import EntryPointScanner
 from bqm.utils.entry.wrapper import CallableWrapper
+from bqm.utils.gitx import GitRepo
+from bqm.utils.logconfig import init_logging, make_logger
 
 logger = make_logger(__name__)
 
@@ -18,9 +19,7 @@ class CallableRepoLauncherClassError(Exception):
 class CallableRepoLauncherClass(type):
 
     @classmethod
-    def select_entry_point(
-        cls, entry_points: list[type[CallableWrapper]], tgt_entry_pt: str | None
-    ):
+    def select_entry_point(cls, entry_points: list[type[CallableWrapper]], tgt_entry_pt: str | None):
         ep_instances = {}
         for ep_type in entry_points:
             ep_instance = ep_type()
@@ -42,10 +41,8 @@ class CallableRepoLauncherClass(type):
             ep = ep_instances.keys()[0]
             logger.info(f"🚀  No entry point specified. __main__ not found. Found a single entry point: {ep}!")
             return ep_instances[ep]
-        
-        raise CallableRepoLauncherClassError(
-                f"Expected esactly 1 entry point. got {len(entry_points)} "
-            )
+
+        raise CallableRepoLauncherClassError(f"Expected esactly 1 entry point. got {len(entry_points)} ")
 
     def __call__(
         cls,
@@ -90,13 +87,13 @@ class CallableRepoLauncherClass(type):
         sys.path.insert(0, checkout_path.as_posix())
         epr = EntryPointScanner()
         _, entry_points = epr.scan(src_path)
-        selected_entry_point  = cls.select_entry_point(entry_points, target_entry_point)
+        selected_entry_point = cls.select_entry_point(entry_points, target_entry_point)
 
-        logger.info('STARTING target process')
-        from bqm.harness.launcher import Launcher
+        logger.info("STARTING target process")
         Launcher(job=selected_entry_point, config=conf)
         # selected_entry_point()
-        logger.info('FINISHED target process')
+        logger.info("FINISHED target process")
+
 
 class RepoLauncher(metaclass=CallableRepoLauncherClass):
     pass

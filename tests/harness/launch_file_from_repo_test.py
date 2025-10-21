@@ -1,6 +1,5 @@
 from bqm.harness import RepoLauncher
 
-
 RepoLauncher(
     config={
         "source": {
@@ -8,13 +7,12 @@ RepoLauncher(
             "branch": "test-branch",
             "use-local": True,
             "workdir": "/data/tmp/",
-            "src-subfolder":"src",
+            "src-subfolder": "src",
             # "file-to-run":"module/main.py",
             # "entry-point":"__main__",
-            "file-to-run":"module/long_running_test.py",
-            "entry-point":"xyz",
+            "file-to-run": "module/long_running_test.py",
+            "entry-point": "xyz",
         },
-       
         "harness": {
             "interface": "0.0.0.0",
             "port": 3000,
