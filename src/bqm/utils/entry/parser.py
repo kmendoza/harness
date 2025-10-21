@@ -1,9 +1,14 @@
 import ast
+from pathlib import Path
 from typing import Any
 
 from bqm.utils.logconfig import make_logger
 
 logger = make_logger(__name__)
+
+
+class EntryPointParserError(Exception):
+    pass
 
 
 class EntryPointParser:
@@ -19,8 +24,14 @@ class EntryPointParser:
         """Analyze a Python file to find entry points"""
 
         self._wipe()
-        with open(filename, "r", encoding="utf-8") as file:
-            content = file.read()
+
+        file = Path(filename)
+        if not file.exists():
+            logger.error(f"file does not exist: {file}")
+            raise EntryPointParserError(f"ERROR. file does not exist: {file}")
+
+        with open(file, "r", encoding="utf-8") as f:
+            content = f.read()
 
         try:
             tree = ast.parse(content)
@@ -66,24 +77,17 @@ class EntryPointParser:
         self.functions.append(func_info)
 
     def _analyze_class(self, node: ast.ClassDef):
-        methods = []
-        has_call = False
-        has_init = False
 
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef):
-                methods.append(item.name)
-                if item.name == "__call__":
-                    has_call = True
-                elif item.name == "__init__":
-                    has_init = True
+        bases = [base.id for base in node.bases if isinstance(base, ast.Name)]
+        methods = [item.name for item in node.body if isinstance(item, ast.FunctionDef)]
 
         class_info = {
             "name": node.name,
+            "bases": bases,
             "methods": methods,
-            "has_call": has_call,
-            "has_init": has_init,
-            "is_callable": has_call,
+            "is_cradle": "Cradle" in bases,
+            "has_init": "__init__" in methods,
+            "is_callable": "__call__" in methods,
             "docstring": ast.get_docstring(node),
             "line_no": node.lineno,
         }
@@ -183,5 +187,5 @@ class EntryPointParser:
 
 # if __name__ == "__main__":
 #     ep = EntryPointParser()
-#     analysis = ep.analyze_file("/home/iztok/work/trading/harness/tests/cradle_test_consul.py")
+#     analysis = ep.analyze_file("/home/iztok/work/hwork/harness/tests/harness/launch_cradle_class_test.py")
 #     pass
