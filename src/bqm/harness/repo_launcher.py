@@ -93,7 +93,9 @@ class CallableRepoLauncherClass(type):
         selected_entry_point  = cls.select_entry_point(entry_points, target_entry_point)
 
         logger.info('STARTING target process')
-        selected_entry_point()
+        from bqm.harness.launcher import Launcher
+        Launcher(job=selected_entry_point, config=conf)
+        # selected_entry_point()
         logger.info('FINISHED target process')
 
 class RepoLauncher(metaclass=CallableRepoLauncherClass):

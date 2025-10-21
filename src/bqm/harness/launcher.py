@@ -35,7 +35,7 @@ class CallableLauncherClass(type):
         if "logging" in conf:
             init_logging(conf["logging"])
 
-        target._config = conf["target-config"]
+        target._config = conf.get("target-config", {})
 
         exit_code = asyncio.run(ProcessHarness(config=conf).main(target))
 
