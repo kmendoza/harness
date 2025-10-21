@@ -4,8 +4,8 @@ from typing import Any
 
 from jsonschema import validate
 
-from bqm.utils.logconfig import make_logger
 from bqm.utils.consulx import ConsulConfig
+from bqm.utils.logconfig import make_logger
 
 logger = make_logger(__name__)
 

@@ -1,4 +1,4 @@
-from logging import INFO, Formatter, Logger, StreamHandler, getLogger, config
+from logging import INFO, Formatter, Logger, StreamHandler, config, getLogger
 from typing import Any
 
 

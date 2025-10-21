@@ -30,7 +30,7 @@ class EntryPointScanner:
         # Create wrapper classes for each entry point
         wrapper_classes = []
         for entry_point in analysis["entry_points"]:
-            #logger.info(f"  Creating wrapper for: {entry_point['description']}")
+            # logger.info(f"  Creating wrapper for: {entry_point['description']}")
             try:
                 wrapper_class = EntryPointExtender.create_wrapper_class(entry_point, module)
                 wrapper_classes.append(wrapper_class)

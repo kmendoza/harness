@@ -38,7 +38,9 @@ class GitRepo:
 
         if self._force_offline:
             self._repo = self.get_offline_repo()
-            logger.info(f"🚀  Using a local clone of repo: {self._repo_url}. Commit: {self._repo.head.commit.hexsha[:8]} - {self._repo.head.commit.message.strip()}")
+            logger.info(
+                f"🚀  Using a local clone of repo: {self._repo_url}. Commit: {self._repo.head.commit.hexsha[:8]} - {self._repo.head.commit.message.strip()}"
+            )
         elif not self.__check_connection() and self._offline_ok:
             self._repo = self.get_offline_repo()
         else:
@@ -47,66 +49,64 @@ class GitRepo:
             else:
                 self._repo = self.__clone()
 
-
     def get_offline_repo(self) -> git.Repo:
         existing_repo = self.__examine_offline_repo()
         if existing_repo:
-            logger.info(f'✅  OK. running in OFFLINE mode')
+            logger.info(f"✅  OK. running in OFFLINE mode")
             return existing_repo
         else:
-            msg = '❌  ERROR. No connection and unable to use offline mode.'
+            msg = "❌  ERROR. No connection and unable to use offline mode."
             logger.error(msg)
             raise GitOperatorError(msg)
-
 
     def __check_connection(self) -> bool:
         try:
             git.cmd.Git().ls_remote(self._repo_url)
-            logger.info(f'✅  Remote repo {self._repo_url} is reachabble')
+            logger.info(f"✅  Remote repo {self._repo_url} is reachabble")
             return True
         except git.exc.GitCommandError as gce:
-            logger.warning(f'⚡ Remote repo {self._repo_url} is not reachabble')
+            logger.warning(f"⚡ Remote repo {self._repo_url} is not reachabble")
             return False
- 
+
     def __examine_offline_repo(self) -> bool:
-        '''
+        """
         when no connection, check if the local repo exists and is a clone of remote
-        '''
-        if self._repo_dir.exists() and (self._repo_dir / '.git').exists():
+        """
+        if self._repo_dir.exists() and (self._repo_dir / ".git").exists():
             logger.info(f"Repository exists at {self._repo_dir}")
-            
+
             existing_repo = git.Repo(self._repo_dir)
             if self.__verify_remote_url(existing_repo):
                 return existing_repo
-            
+
         return None
-        
+
     def __checkout_or_clone(self) -> git.Repo:
-        '''
-        If directory exists, check if 
-        '''
+        """
+        If directory exists, check if
+        """
 
         logger.info(f"Smart checkout of repo: {self._repo_url}")
-        
+
         self._work_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Check if repo exists and is valid
-        if self._repo_dir.exists() and (self._repo_dir / '.git').exists():
+        if self._repo_dir.exists() and (self._repo_dir / ".git").exists():
             logger.info(f"Repository exists at {self._repo_dir}")
-            
+
             try:
-                
+
                 # Verify remote URL matches
                 existing_repo = git.Repo(self._repo_dir)
                 if not self.__verify_remote_url(existing_repo):
                     msg = f"❌ Target directory {self._repo_dir} exists but already has another repo checkout - fix manually"
                     logger.warning(msg)
                     raise GitOperatorError(msg)
-                
+
                 # Update existing repo
                 self._repo = existing_repo
                 return self.__update_existing_repo()
-                
+
             except git.InvalidGitRepositoryError:
                 msg = f"❌Directory {self._repo_dir} exists but is not a valid git repository - fix manually"
                 logger.warning(msg)
@@ -115,26 +115,26 @@ class GitRepo:
             # Clone fresh
             return self.__clone()
 
-    def __verify_remote_url(self, repo:git.Repo) -> bool:
+    def __verify_remote_url(self, repo: git.Repo) -> bool:
         """Verify the local repo's remote URL matches expected URL"""
         try:
             if not repo.remotes:
                 return False
-            
+
             local_url = repo.remotes.origin.url
-            
+
             # Normalize URLs for comparison (handle .git suffix)
             def normalize_url(url: str) -> str:
-                return url.rstrip('/').replace('.git', '')
-            
+                return url.rstrip("/").replace(".git", "")
+
             if normalize_url(local_url) != normalize_url(self._repo_url):
                 logger.warning(f"📛 local and remote URL mismatch:")
                 logger.warning(f"  local url: {local_url}")
                 logger.warning(f"  expeected: {self._repo_url}")
                 return False
-            
+
             return True
-            
+
         except Exception as e:
             logger.warning(f"Error verifying remote URL: {e}")
             return False
@@ -143,37 +143,37 @@ class GitRepo:
         """Update existing repository to latest version"""
         try:
             origin = self._repo.remotes.origin
-            
+
             logger.info(f"⁉️  Fetching latest changes from remote...")
             origin.fetch()
 
             # Check if desired branch exists locally
             if self._branch not in self._repo.heads:
                 logger.info(f"Creating local branch '{self._branch}' to track remote")
-                if self._branch in [ref.name.split('/')[-1] for ref in origin.refs]:
+                if self._branch in [ref.name.split("/")[-1] for ref in origin.refs]:
                     self._repo.create_head(self._branch, origin.refs[self._branch])
                 else:
                     logger.error(f"Branch '{self._branch}' not found on remote")
                     raise GitOperatorError(f"Branch '{self._branch}' does not exist on remote")
-            
+
             # Checkout branch
             self._repo.heads[self._branch].checkout()
-            
+
             # Check if update needed
             local_commit = self._repo.head.commit
             remote_ref = f"origin/{self._branch}"
-            
+
             if remote_ref not in [ref.name for ref in origin.refs]:
                 logger.warning(f"Remote branch {remote_ref} not found")
                 self._cloned = True
                 return self._repo
-            
+
             remote_commit = origin.refs[self._branch].commit
-            
+
             if local_commit.hexsha != remote_commit.hexsha:
                 # Check if we can fast-forward
                 merge_base = self._repo.merge_base(local_commit, remote_commit)
-                
+
                 if merge_base and merge_base[0] == local_commit:
                     logger.info(f"⬇️ Local branch is behind remote. Pulling changes...")
                     origin.pull(self._branch)
@@ -187,10 +187,10 @@ class GitRepo:
                     logger.info("🚀 Repository reset to remote state")
             else:
                 logger.info("🚀 Repository is already up-to-date")
-            
+
             self._cloned = True
             return self._repo
-            
+
         except Exception as e:
             logger.error(f"Error updating repository: {e}")
             logger.info("Falling back to fresh clone")
@@ -201,14 +201,14 @@ class GitRepo:
         """Clone repository fresh (original behavior)"""
         logger.info(f"Cloning repo: {self._repo_url}")
 
-        # if repo target directory exists 
+        # if repo target directory exists
         if self._repo_dir.exists():
             # check that this is a git repo and that it matches the repo we are trying to check ou
-            repo_config = self._repo_dir /'.git'/'config'
+            repo_config = self._repo_dir / ".git" / "config"
             if repo_config.exists():
                 if self.__verify_remote_url(git.Repo(self._repo_dir)):
-                    logger.warning(f'Target locataion is already a git repo but url is the same as your target url : {self._repo_url} ')
-                    logger.warning(f'⭕ Deleting local repo dir: {self._repo_dir} ')
+                    logger.warning(f"Target locataion is already a git repo but url is the same as your target url : {self._repo_url} ")
+                    logger.warning(f"⭕ Deleting local repo dir: {self._repo_dir} ")
                     shutil.rmtree(self._repo_dir)
                 else:
                     msg = f"❌ Target directory {self._repo_dir} exists but already has another repo checkout - fix manually"
@@ -216,7 +216,7 @@ class GitRepo:
                     raise GitOperatorError(msg)
         else:
             self._work_dir.mkdir(parents=True, exist_ok=True)
-    
+
         try:
             logger.info(f"Cloning {self._repo_url} (branch: {self._branch})")
             self._repo = git.Repo.clone_from(
@@ -225,7 +225,7 @@ class GitRepo:
                 branch=self._branch,
                 depth=self._depth,
             )
-            
+
             self._cloned = True
 
             logger.info(f"✅ Repository cloned to: {self._repo_dir}")
@@ -250,12 +250,12 @@ class GitRepo:
     def force_update(self):
         """Force update from remote (fetch and reset to remote HEAD)"""
         self.__check_local()
-        
+
         try:
             logger.info("Force updating repository...")
             origin = self._repo.remotes.origin
             origin.fetch()
-            
+
             remote_ref = f"origin/{self._branch}"
             if remote_ref in [ref.name for ref in origin.refs]:
                 remote_commit = origin.refs[self._branch].commit
@@ -263,7 +263,7 @@ class GitRepo:
                 logger.info("✓ Repository force updated to remote state")
             else:
                 logger.error(f"Remote branch {remote_ref} not found")
-                
+
         except Exception as e:
             logger.error(f"Error force updating: {e}")
             raise GitOperatorError(f"Could not force update: {e}")
@@ -287,10 +287,10 @@ class GitRepo:
     def checkout_branch(self, branch: str):
         """Checkout a specific branch"""
         self.__check_local()
-        
+
         try:
             logger.info(f"Checking out branch: {branch}")
-            
+
             if branch in self._repo.heads:
                 self._repo.heads[branch].checkout()
             elif f"origin/{branch}" in [ref.name for ref in self._repo.remotes.origin.refs]:
@@ -298,7 +298,7 @@ class GitRepo:
                 self._repo.heads[branch].checkout()
             else:
                 raise GitOperatorError(f"Branch '{branch}' not found locally or on remote")
-                
+
         except Exception as e:
             logger.error(f"Could not checkout branch: {e}")
             raise GitOperatorError(f"Could not checkout branch: {e}")
@@ -346,11 +346,11 @@ if __name__ == "__main__":
         repo_url="git@github.com:kmendoza/harness_test.git",
         branch="test-branch",
         workdir="/data/tst/",
-        #always_clone=False,
+        # always_clone=False,
         force_offline=True,
     )
     repo.print_info()
-    
+
     # Example without smart update (original behavior)
     # repo = GitRepo(
     #     repo_url="git@github.com:kmendoza/harness_test.git",
@@ -358,9 +358,9 @@ if __name__ == "__main__":
     #     workdir="/tmp/",
     #     smart_update=False,  # Always clone fresh
     # )
-    
+
     # repo.checkout_commit("8698792d02ff2f139dd4eb72b5cb5a225c24b29a")
     # repo.print_info()
-    
+
     # repo.checkout_commit("29e6bb154a36c825f0b7b3ea211f6278aad55517")
     # repo.print_info()

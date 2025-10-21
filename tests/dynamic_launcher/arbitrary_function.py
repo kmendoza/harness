@@ -38,8 +38,8 @@ class bar:
 
 
 def some_func():
-    print('Some functions as entry point')
+    print("Some functions as entry point")
 
 
 if __name__ == "__main__":
-    print('__main__ as entry point')
+    print("__main__ as entry point")

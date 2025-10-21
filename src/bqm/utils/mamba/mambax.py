@@ -5,8 +5,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from bqm.utils.mamba.package import PackageList
 from bqm.utils.logconfig import make_logger
+from bqm.utils.mamba.package import PackageList
 
 logger = make_logger(__name__)
 

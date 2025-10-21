@@ -1,12 +1,16 @@
 import json
-import consul
 from typing import Any
+
+import consul
+
 from bqm.utils.logconfig import make_logger
 
 logger = make_logger(__name__)
 
+
 class ConsulConfigError(Exception):
     pass
+
 
 class ConsulConfig:
     def __init__(self, host="localhost", port=8500, token=None):
@@ -62,7 +66,7 @@ class ConsulConfig:
         except json.JSONDecodeError as e:
             logger.error(f"Error parsing JSON for key '{key}': {e}")
             # return None
-            raise  ConsulConfigError(f'failed to JSON parse value: {value}')
+            raise ConsulConfigError(f"failed to JSON parse value: {value}")
 
     def get_all_keys_with_prefix(self, prefix: str) -> dict[str, str]:
         """
