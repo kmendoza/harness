@@ -1,9 +1,9 @@
+import logging
 import time
 
-from bqm.harness import Cradle, Launcher, Command
-import logging
+from bqm.harness import Command, Cradle, Launcher
 
-logger = logging.getLogger("myapp")
+logger = logging.getLogger(__name__)
 
 
 class TestJob(Cradle):
