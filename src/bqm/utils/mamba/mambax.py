@@ -21,6 +21,7 @@ class Mamba:
         self,
         miniforge_path: str = "/opt/miniforge3",
     ):
+        self.__check_miniforge_instl(miniforge_path)
         self._miniforge_path = miniforge_path
         self._rc_file = self.__make_resource_file()
         if not Path(self._rc_file).exists():
@@ -29,6 +30,23 @@ class Mamba:
         self.test_mamba()
         self.__refresh_env_list()
         pass
+
+    def __check_miniforge_instl(self, mf_path: str):
+        """
+        do some cursory checks that miniforge exists and looks roughly sensible
+        """
+
+        mfp = Path(mf_path)
+        if not mfp.exists():
+            raise MambaError(f"Specified Miniforge path {mfp} does not exist")
+
+        mfp_bin = mfp / "bin"
+        if not mfp_bin.exists():
+            raise MambaError(f"bins path {mfp_bin} does not exist")
+
+        mamba_path = mfp_bin / "mamba"
+        if not mamba_path.exists():
+            raise MambaError(f"Specified mamba path {mamba_path} does not exist")
 
     def __mamba_exec(self, conda_cmd: str, env: str | None = None, use_conda: bool = False) -> subprocess.CompletedProcess:
         """
@@ -105,7 +123,7 @@ class Mamba:
     ) -> str:
 
         if reqs_str and not reqs_file:
-            checked_file = tempfile.mktemp()
+            checked_file = tempfile.mkstemp()
             with open(checked_file, "w") as f:
                 f.write(reqs_str)
             return checked_file
@@ -388,17 +406,3 @@ class Mamba:
             fi
             # <<< conda initialize <<<
         """
-
-
-if __name__ == "__main__":
-
-    mamba = Mamba()
-    test_env = "XXXXXXXX-unit-test-YYYYYY"
-
-    # if mamba.env_exists(test_env):
-    #     mamba.remove_env(test_env, waive_safety=True)
-
-    # mamba.create_env(test_env)
-    # # mamba.create_env(test_env, python_version="3.12")
-
-    mamba.pip_list(test_env)
