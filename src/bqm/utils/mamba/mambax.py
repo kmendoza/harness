@@ -242,6 +242,24 @@ class Mamba:
                 raise MambaError(f"Error during MAMBA pakcage install command: {cmd}")
             return self._last_install_log
 
+    def run(
+        self,
+        env: str,
+        file: str | Path,
+    ) -> dict[str, Any]:
+        cmd = f"run -n {env} {file}"
+
+        res = self.__mamba_exec(cmd)
+
+        if res.returncode != 0:
+            logger.error(res.stderr)
+            raise MambaError(f"Error during pakcage install command: {cmd}")
+        else:
+            self._last_install_log = json.loads(res.stdout)
+            if not self._last_install_log["success"]:
+                raise MambaError(f"Error during MAMBA pakcage install command: {cmd}")
+            return self._last_install_log
+
     def pip_install(
         self,
         env: str,
