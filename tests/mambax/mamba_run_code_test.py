@@ -4,15 +4,40 @@ from bqm.utils.mamba.mambax import Mamba
 
 class MambaTests(unittest.TestCase):
     def test_env_run(self):
-        test_env = "XXXXXXXX-unit-test-YYYYYY"
+        py_code = """
+import time
+
+from bqm.harness import Launcher
+from bqm.utils.logconfig import make_logger
+
+
+print(123)
+print(__name__)
+logger = make_logger(__name__)
+
+class Foo:
+    def __call__(self, *args):
+        SEC = 10
+
+        print(\" ----> user task START\")
+
+        t0 = time.time()
+        while 1 < 2:
+            print(\".\")
+            if time.time() - t0 > SEC:
+                print(f\"Finished running due to {time.time() - t0:.1f} s\")
+                break
+            time.sleep(1)
+
+
+
+Launcher(job=Foo())
+
+"""
+
         mamba = Mamba()
-
-        pckg_names = ["pandas", "numpy", "pytz", "simplefix"]
-        pckg_vers = ["2.2.0", "1.26.4", None, ""]
-
-        # if mamba.env_exists(test_env):
-        #     mamba.remove_env(test_env, waive_safety=True)
-        mamba.run(env="htest", file="/home/iztok/work/hwork/harness_test/src/module/main.py")
+        res = mamba.run_code(env="harness", code=py_code)
+        pass
 
 
 if __name__ == "__main__":

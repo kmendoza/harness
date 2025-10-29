@@ -267,7 +267,7 @@ class Mamba:
     ):
 
         envv = f"-n {env}" if env else ""
-        cmd = f"run {envv} python -c {code}"
+        cmd = f"run {envv} python -c '{code}'"
 
         res = self.__mamba_exec(cmd, capture_output=False)
 
