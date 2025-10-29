@@ -12,37 +12,37 @@ from bqm.utils.logconfig import init_logging, make_logger
 logger = make_logger(__name__)
 
 
-class CallableRepoLauncherClassError(Exception):
+class CallableFileLauncherClassError(Exception):
     pass
 
 
-class CallableRepoLauncherClass(type):
+class CallableFileLauncherClass(type):
 
-    # @classmethod
-    # def select_entry_point(cls, entry_points: list[type[CallableWrapper]], tgt_entry_pt: str | None):
-    #     ep_instances = {}
-    #     for ep_type in entry_points:
-    #         ep_instance = ep_type()
-    #         ep_info = ep_instance.get_info()
-    #         ep_instances[ep_info["name"]] = ep_instance
-    #         logger.info(f"➡️  Found viable entry point : {ep_info}")
+    @classmethod
+    def select_entry_point(cls, entry_points: list[type[CallableWrapper]], tgt_entry_pt: str | None):
+        ep_instances = {}
+        for ep_type in entry_points:
+            ep_instance = ep_type()
+            ep_info = ep_instance.get_info()
+            ep_instances[ep_info["name"]] = ep_instance
+            logger.info(f"➡️  Found viable entry point : {ep_info}")
 
-    #     # if EP was named and exists, done...
-    #     if tgt_entry_pt in ep_instances:
-    #         logger.info(f"🚀  Looking for entry point {tgt_entry_pt}. Found it!")
-    #         return ep_instances[tgt_entry_pt]
+        # if EP was named and exists, done...
+        if tgt_entry_pt in ep_instances:
+            logger.info(f"🚀  Looking for entry point {tgt_entry_pt}. Found it!")
+            return ep_instances[tgt_entry_pt]
 
-    #     # if __main__ in entry points ...
-    #     if "__main__" in ep_instances:
-    #         logger.info(f"🚀  No Entry point specified. Found __main__!")
-    #         return ep_instances["__main__"]
+        # if __main__ in entry points ...
+        if "__main__" in ep_instances:
+            logger.info("🚀  No Entry point specified. Found __main__!")
+            return ep_instances["__main__"]
 
-    #     if len(entry_points) == 1:
-    #         ep = ep_instances.keys()[0]
-    #         logger.info(f"🚀  No entry point specified. __main__ not found. Found a single entry point: {ep}!")
-    #         return ep_instances[ep]
+        if len(entry_points) == 1:
+            ep = ep_instances.keys()[0]
+            logger.info(f"🚀  No entry point specified. __main__ not found. Found a single entry point: {ep}!")
+            return ep_instances[ep]
 
-    #     raise CallableRepoLauncherClassError(f"Expected esactly 1 entry point. got {len(entry_points)} ")
+        raise CallableFileLauncherClassError(f"Expected esactly 1 entry point. got {len(entry_points)} ")
 
     def __call__(
         cls,
@@ -58,14 +58,14 @@ class CallableRepoLauncherClass(type):
         if "source" not in conf:
             msg = "ERROR. Expecting 'source' in config"
             logger.error(msg)
-            raise CallableRepoLauncherClassError(msg)
+            raise CallableFileLauncherClassError(msg)
 
         src_conf = conf["source"]
         repo = GitRepo(
             repo_url=src_conf["repo"],
             branch=src_conf["branch"],
             workdir=src_conf["workdir"],
-            force_offline=src_conf.get("use-local", "."),
+            force_offline=True,
         )
         repo.print_info()
 
@@ -78,7 +78,7 @@ class CallableRepoLauncherClass(type):
         src_path = checkout_path / target_file
         # src_path = Path(src_conf["workdir"]) / 'harness_test' / subfolder / target_file
         if not src_path.exists():
-            raise CallableRepoLauncherClassError(
+            raise CallableFileLauncherClassError(
                 f"Inferred root source path does not exist: {src_path}. Most likely the root_subfolder "
                 f"{subfolder} does not exist within the repo {src_conf['repo']} "
             )
@@ -91,9 +91,8 @@ class CallableRepoLauncherClass(type):
 
         logger.info("STARTING target process")
         Launcher(job=selected_entry_point, config=conf)
-        # selected_entry_point()
         logger.info("FINISHED target process")
 
 
-class RepoLauncher(metaclass=CallableRepoLauncherClass):
+class FileLauncher(metaclass=CallableFileLauncherClass):
     pass

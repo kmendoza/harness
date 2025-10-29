@@ -48,7 +48,9 @@ class Mamba:
         if not mamba_path.exists():
             raise MambaError(f"Specified mamba path {mamba_path} does not exist")
 
-    def __mamba_exec(self, conda_cmd: str, env: str | None = None, use_conda: bool = False) -> subprocess.CompletedProcess:
+    def __mamba_exec(
+        self, conda_cmd: str, env: str | None = None, capture_output: bool = True, use_conda: bool = False
+    ) -> subprocess.CompletedProcess:
         """
         launch a mamba command subprocess
         always load the mamba rc
@@ -63,7 +65,7 @@ class Mamba:
         result = subprocess.run(
             ["bash", "-c", f"source {self._rc_file} {activate_env} && {mamba} {conda_cmd}"],
             executable="/bin/bash",
-            capture_output=True,
+            capture_output=capture_output,
             text=True,
         )
         return result
@@ -246,19 +248,16 @@ class Mamba:
         self,
         env: str,
         file: str | Path,
-    ) -> dict[str, Any]:
-        cmd = f"run -n {env} {file}"
+    ):
+        if not Path(file).exists():
+            raise MambaError(f"File {file} does not exist.")
 
-        res = self.__mamba_exec(cmd)
+        cmd = f"run -n {env} python {file}"
+
+        res = self.__mamba_exec(cmd, capture_output=False)
 
         if res.returncode != 0:
-            logger.error(res.stderr)
-            raise MambaError(f"Error during pakcage install command: {cmd}")
-        else:
-            self._last_install_log = json.loads(res.stdout)
-            if not self._last_install_log["success"]:
-                raise MambaError(f"Error during MAMBA pakcage install command: {cmd}")
-            return self._last_install_log
+            raise MambaError(f"Error {res.returncode} while trying to run python file {cmd}")
 
     def pip_install(
         self,
