@@ -18,31 +18,35 @@ class CallableRepoLauncherClassError(Exception):
 
 class CallableRepoLauncherClass(type):
 
-    # @classmethod
-    # def select_entry_point(cls, entry_points: list[type[CallableWrapper]], tgt_entry_pt: str | None):
-    #     ep_instances = {}
-    #     for ep_type in entry_points:
-    #         ep_instance = ep_type()
-    #         ep_info = ep_instance.get_info()
-    #         ep_instances[ep_info["name"]] = ep_instance
-    #         logger.info(f"➡️  Found viable entry point : {ep_info}")
+    @classmethod
+    def make_invocation_script(cls, entry_points: list[type[CallableWrapper]], tgt_entry_pt: str | None):
+        # def call_in_conda_env(env_name, callable_path, config):
+        #     """Returns the result as a Python object (deserializes from JSON)"""
+        #     module_path, function_name = callable_path.split(':')
+        #     config_json = json.dumps(config)
 
-    #     # if EP was named and exists, done...
-    #     if tgt_entry_pt in ep_instances:
-    #         logger.info(f"🚀  Looking for entry point {tgt_entry_pt}. Found it!")
-    #         return ep_instances[tgt_entry_pt]
+        #     code = f"""
+        # import json
+        # from {module_path} import {function_name}
 
-    #     # if __main__ in entry points ...
-    #     if "__main__" in ep_instances:
-    #         logger.info(f"🚀  No Entry point specified. Found __main__!")
-    #         return ep_instances["__main__"]
+        # config = json.loads('''{config_json}''')
+        # result = {function_name}(config)
+        # # Return result as JSON
+        # print(json.dumps(result))
+        # """
 
-    #     if len(entry_points) == 1:
-    #         ep = ep_instances.keys()[0]
-    #         logger.info(f"🚀  No entry point specified. __main__ not found. Found a single entry point: {ep}!")
-    #         return ep_instances[ep]
+        #     result = subprocess.run(
+        #         ['conda', 'run', '-n', env_name, 'python', '-c', code],
+        #         capture_output=True,
+        #         text=True
+        #     )
 
-    #     raise CallableRepoLauncherClassError(f"Expected esactly 1 entry point. got {len(entry_points)} ")
+        #     if result.returncode != 0:
+        #         raise RuntimeError(f"Error:\n{result.stderr}")
+
+        #     # Parse the JSON result back to Python object
+        #     return json.loads(result.stdout.strip())
+        pass
 
     def __call__(
         cls,
@@ -72,27 +76,40 @@ class CallableRepoLauncherClass(type):
         # create path to source within the repo
         subfolder = src_conf.get("src-subfolder", ".")
         target_file = src_conf["file-to-run"]
-        target_entry_point = src_conf.get("entry-point", None)
-
         checkout_path = repo.local_dir() / subfolder
         src_path = checkout_path / target_file
-        # src_path = Path(src_conf["workdir"]) / 'harness_test' / subfolder / target_file
-        if not src_path.exists():
-            raise CallableRepoLauncherClassError(
-                f"Inferred root source path does not exist: {src_path}. Most likely the root_subfolder "
-                f"{subfolder} does not exist within the repo {src_conf['repo']} "
-            )
 
-        # insesrt the root of the checked out source into python path
-        sys.path.insert(0, checkout_path.as_posix())
-        epr = EntryPointScanner()
-        _, entry_points = epr.scan(src_path)
-        selected_entry_point = cls.select_entry_point(entry_points, target_entry_point)
+        if "env" in conf:
+            env_conf = conf["env"]
+            if "name" in env_conf:
+                target_env = env_conf["name"]
+                pass
+            else:
+                raise CallableRepoLauncherClassError("Expecting environment name key (env.name) in config. Not found")
+        # # create path to source within the repo
+        # subfolder = src_conf.get("src-subfolder", ".")
+        # target_file = src_conf["file-to-run"]
+        # target_entry_point = src_conf.get("entry-point", None)
 
-        logger.info("STARTING target process")
-        Launcher(job=selected_entry_point, config=conf)
-        # selected_entry_point()
-        logger.info("FINISHED target process")
+        # checkout_path = repo.local_dir() / subfolder
+        # src_path = checkout_path / target_file
+        # # src_path = Path(src_conf["workdir"]) / 'harness_test' / subfolder / target_file
+        # if not src_path.exists():
+        #     raise CallableRepoLauncherClassError(
+        #         f"Inferred root source path does not exist: {src_path}. Most likely the root_subfolder "
+        #         f"{subfolder} does not exist within the repo {src_conf['repo']} "
+        #     )
+
+        # # insesrt the root of the checked out source into python path
+        # sys.path.insert(0, checkout_path.as_posix())
+        # epr = EntryPointScanner()
+        # _, entry_points = epr.scan(src_path)
+        # selected_entry_point = cls.select_entry_point(entry_points, target_entry_point)
+
+        # logger.info("STARTING target process")
+        # Launcher(job=selected_entry_point, config=conf)
+        # # selected_entry_point()
+        # logger.info("FINISHED target process")
 
 
 class RepoLauncher(metaclass=CallableRepoLauncherClass):

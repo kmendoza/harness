@@ -246,13 +246,28 @@ class Mamba:
 
     def run(
         self,
-        env: str,
+        env: str | None,
         file: str | Path,
     ):
         if not Path(file).exists():
             raise MambaError(f"File {file} does not exist.")
 
-        cmd = f"run -n {env} python {file}"
+        envv = f"-n {env}" if env else ""
+        cmd = f"run {envv} python {file}"
+
+        res = self.__mamba_exec(cmd, capture_output=False)
+
+        if res.returncode != 0:
+            raise MambaError(f"Error {res.returncode} while trying to run python file {cmd}")
+
+    def run_code(
+        self,
+        env: str | None,
+        code: str,
+    ):
+
+        envv = f"-n {env}" if env else ""
+        cmd = f"run {envv} python -c {code}"
 
         res = self.__mamba_exec(cmd, capture_output=False)
 
