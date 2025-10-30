@@ -17,7 +17,7 @@ logger = make_logger(__name__)
 
 class Foo:
     def __call__(self, *args):
-        SEC = 10
+        SEC = 100
 
         print(\" ----> user task START\")
 
@@ -30,10 +30,15 @@ class Foo:
             time.sleep(1)
 
 
-
 Launcher(job=Foo())
 
+
 """
+        # class MambaTests(unittest.TestCase):
+        #     def test_env_run(self):
+        #         py_code = """
+        # print(123)
+        # """
 
         mamba = Mamba()
         res = mamba.run_code(env="harness", code=py_code)

@@ -70,12 +70,29 @@ class Mamba:
         )
         return result
 
+    def __mamba_exec_run(
+        self, run_cmd: str, env: str | None = None, capture_output: bool = False, use_conda: bool = False
+    ) -> subprocess.CompletedProcess:
+        """
+        specialised mamba mamba launch for mamba run.
+        """
+        mamba = "mamba" if not use_conda else "conda"
+        activate_env = f" && {mamba} activate {env}" if env else ""
+        mamba_env = f" -n {env}" if env else ""
+        mamba_run_tty = f" --live-stream" if not capture_output else ""
+
+        result = subprocess.run(
+            ["bash", "-c", f"source {self._rc_file}  && {mamba} run {mamba_env} {mamba_run_tty} python {run_cmd}"],
+            executable="/bin/bash",
+            capture_output=capture_output,
+            text=True,
+        )
+        return result
+
     def __pip_exec(self, pip_cmd: str, env: str) -> subprocess.CompletedProcess:
         result = subprocess.run(
             ["bash", "-c", f"source {self._rc_file} && mamba activate {env} && pip {pip_cmd}"],
             executable="/bin/bash",
-            capture_output=True,
-            text=True,
         )
         return result
 
@@ -265,14 +282,11 @@ class Mamba:
         env: str | None,
         code: str,
     ):
-
-        envv = f"-n {env}" if env else ""
-        cmd = f"run {envv} python -c '{code}'"
-
-        res = self.__mamba_exec(cmd, capture_output=False)
+        run_cmd = f"-c '{code}'"
+        res = self.__mamba_exec_run(env=env, run_cmd=run_cmd, capture_output=False)
 
         if res.returncode != 0:
-            raise MambaError(f"Error {res.returncode} while trying to run python file {cmd}")
+            raise MambaError(f"Error {res.returncode} while trying to run python file {run_cmd}")
 
     def pip_install(
         self,
