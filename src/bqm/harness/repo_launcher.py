@@ -1,13 +1,17 @@
+import json
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
 from bqm.harness.conf.service_config import ServiceConfig
 from bqm.harness.launcher import Launcher
+from bqm.harness.file_launcher import FileLauncher
 from bqm.utils.entry.runner import EntryPointScanner
 from bqm.utils.entry.wrapper import CallableWrapper
 from bqm.utils.gitx import GitRepo
 from bqm.utils.logconfig import init_logging, make_logger
+
 
 logger = make_logger(__name__)
 
@@ -19,34 +23,11 @@ class CallableRepoLauncherClassError(Exception):
 class CallableRepoLauncherClass(type):
 
     @classmethod
-    def make_invocation_script(cls, entry_points: list[type[CallableWrapper]], tgt_entry_pt: str | None):
-        # def call_in_conda_env(env_name, callable_path, config):
-        #     """Returns the result as a Python object (deserializes from JSON)"""
-        #     module_path, function_name = callable_path.split(':')
-        #     config_json = json.dumps(config)
-
-        #     code = f"""
-        # import json
-        # from {module_path} import {function_name}
-
-        # config = json.loads('''{config_json}''')
-        # result = {function_name}(config)
-        # # Return result as JSON
-        # print(json.dumps(result))
-        # """
-
-        #     result = subprocess.run(
-        #         ['conda', 'run', '-n', env_name, 'python', '-c', code],
-        #         capture_output=True,
-        #         text=True
-        #     )
-
-        #     if result.returncode != 0:
-        #         raise RuntimeError(f"Error:\n{result.stderr}")
-
-        #     # Parse the JSON result back to Python object
-        #     return json.loads(result.stdout.strip())
-        pass
+    def save_config(cls, cfg: dict[str, Any]) -> Path:
+        f = tempfile.NamedTemporaryFile(delete_on_close=False)
+        with open(f.name, "w") as cfg_file:
+            cfg_file.write(json.dumps(cfg))
+        return f.name
 
     def __call__(
         cls,
@@ -83,7 +64,8 @@ class CallableRepoLauncherClass(type):
             env_conf = conf["env"]
             if "name" in env_conf:
                 target_env = env_conf["name"]
-                pass
+                cfg_file = CallableRepoLauncherClass.save_config(config)
+                FileLauncher(config=cfg_file)
             else:
                 raise CallableRepoLauncherClassError("Expecting environment name key (env.name) in config. Not found")
         # # create path to source within the repo

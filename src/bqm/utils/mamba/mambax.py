@@ -79,7 +79,7 @@ class Mamba:
         mamba = "mamba" if not use_conda else "conda"
         activate_env = f" && {mamba} activate {env}" if env else ""
         mamba_env = f" -n {env}" if env else ""
-        mamba_run_tty = f" --live-stream" if not capture_output else ""
+        mamba_run_tty = " --live-stream" if not capture_output else ""
 
         result = subprocess.run(
             ["bash", "-c", f"source {self._rc_file}  && {mamba} run {mamba_env} {mamba_run_tty} python {run_cmd}"],
