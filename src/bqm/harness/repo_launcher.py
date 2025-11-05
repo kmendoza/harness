@@ -29,6 +29,15 @@ class CallableRepoLauncherClass(type):
             cfg_file.write(json.dumps(cfg))
         return f.name
 
+    @classmethod
+    def make_delegated_launcher_script(cls, cfg: dict[str, Any]) -> str:
+        cfg_file = CallableRepoLauncherClass.save_config(cfg)
+
+        return f"""
+from bqm.harness.file_launcher import FileLauncher
+FileLauncher(config='{cfg_file}')
+"""
+
     def __call__(
         cls,
         config: dict[str, Any] | Path | str | None = None,
@@ -64,9 +73,12 @@ class CallableRepoLauncherClass(type):
             env_conf = conf["env"]
             if "name" in env_conf:
                 target_env = env_conf["name"]
-                cfg_file = CallableRepoLauncherClass.save_config(config)
-                FileLauncher(config=cfg_file)
-            else:
+                # cfg_file = CallableRepoLauncherClass.save_config(config)
+                # FileLauncher(config=cfg_file)
+                code = 
+                mamba = Mamba()
+                res = mamba.run_code(env=target_env, code=py_code)
+             else:
                 raise CallableRepoLauncherClassError("Expecting environment name key (env.name) in config. Not found")
         # # create path to source within the repo
         # subfolder = src_conf.get("src-subfolder", ".")

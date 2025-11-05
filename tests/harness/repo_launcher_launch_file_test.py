@@ -5,7 +5,7 @@ RepoLauncher(
         "source": {
             "repo": "git@github.com:kmendoza/harness_test.git",
             "branch": "test-branch",
-            "use-local": True,
+            "use-local": False,
             "workdir": "/data/tmp/",
             "src-subfolder": "src",
             # "file-to-run":"module/main.py",
@@ -14,7 +14,7 @@ RepoLauncher(
             "entry-point": "xyz",
         },
         "env": {
-            "name": "htest",
+            "name": "xxxhtest",
         },
         "harness": {
             "interface": "0.0.0.0",
