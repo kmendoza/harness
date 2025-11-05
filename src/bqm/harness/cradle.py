@@ -35,4 +35,4 @@ class Cradle(ABC):
         return self._config
 
     def __call__(self):
-        self.run()
+        return self.run()
