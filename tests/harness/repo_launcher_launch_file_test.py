@@ -14,7 +14,7 @@ RepoLauncher(
             "entry-point": "xyz",
         },
         "env": {
-            "name": "xxxhtest",
+            "name": "htest",
         },
         "harness": {
             "interface": "0.0.0.0",

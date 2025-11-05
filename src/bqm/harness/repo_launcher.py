@@ -5,13 +5,13 @@ from pathlib import Path
 from typing import Any
 
 from bqm.harness.conf.service_config import ServiceConfig
-from bqm.harness.launcher import Launcher
 from bqm.harness.file_launcher import FileLauncher
+from bqm.harness.launcher import Launcher
 from bqm.utils.entry.runner import EntryPointScanner
 from bqm.utils.entry.wrapper import CallableWrapper
 from bqm.utils.gitx import GitRepo
 from bqm.utils.logconfig import init_logging, make_logger
-
+from bqm.utils.mamba.mambax import Mamba
 
 logger = make_logger(__name__)
 
@@ -24,7 +24,7 @@ class CallableRepoLauncherClass(type):
 
     @classmethod
     def save_config(cls, cfg: dict[str, Any]) -> Path:
-        f = tempfile.NamedTemporaryFile(delete_on_close=False)
+        f = tempfile.NamedTemporaryFile(delete=False)
         with open(f.name, "w") as cfg_file:
             cfg_file.write(json.dumps(cfg))
         return f.name
@@ -32,10 +32,9 @@ class CallableRepoLauncherClass(type):
     @classmethod
     def make_delegated_launcher_script(cls, cfg: dict[str, Any]) -> str:
         cfg_file = CallableRepoLauncherClass.save_config(cfg)
-
         return f"""
 from bqm.harness.file_launcher import FileLauncher
-FileLauncher(config='{cfg_file}')
+FileLauncher(config="{cfg_file}")
 """
 
     def __call__(
@@ -75,10 +74,10 @@ FileLauncher(config='{cfg_file}')
                 target_env = env_conf["name"]
                 # cfg_file = CallableRepoLauncherClass.save_config(config)
                 # FileLauncher(config=cfg_file)
-                code = 
+                auto_code = cls.make_delegated_launcher_script(conf)
                 mamba = Mamba()
-                res = mamba.run_code(env=target_env, code=py_code)
-             else:
+                res = mamba.run_code(env=target_env, code=auto_code)
+            else:
                 raise CallableRepoLauncherClassError("Expecting environment name key (env.name) in config. Not found")
         # # create path to source within the repo
         # subfolder = src_conf.get("src-subfolder", ".")

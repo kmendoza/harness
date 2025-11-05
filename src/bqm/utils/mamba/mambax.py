@@ -76,6 +76,9 @@ class Mamba:
         """
         specialised mamba mamba launch for mamba run.
         """
+        if env and not self.env_exists(env):
+            raise MambaError(f"Error. Specified environment does not exist: {env}")
+
         mamba = "mamba" if not use_conda else "conda"
         activate_env = f" && {mamba} activate {env}" if env else ""
         mamba_env = f" -n {env}" if env else ""
@@ -282,6 +285,7 @@ class Mamba:
         env: str | None,
         code: str,
     ):
+
         run_cmd = f"-c '{code}'"
         res = self.__mamba_exec_run(env=env, run_cmd=run_cmd, capture_output=False)
 
