@@ -1,6 +1,6 @@
-from bqm.harness import RepoLauncher
+from bqm.harness import EnvSwitchingRepoLauncher
 
-RepoLauncher(
+EnvSwitchingRepoLauncher(
     config={
         "source": {
             "repo": "git@github.com:kmendoza/harness_test.git",

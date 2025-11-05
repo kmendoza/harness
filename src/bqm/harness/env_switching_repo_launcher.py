@@ -20,7 +20,7 @@ class CallableRepoLauncherClassError(Exception):
     pass
 
 
-class CallableRepoLauncherClass(type):
+class CallableEnvSwitchingRepoLauncherClass(type):
 
     @classmethod
     def save_config(cls, cfg: dict[str, Any]) -> Path:
@@ -31,7 +31,7 @@ class CallableRepoLauncherClass(type):
 
     @classmethod
     def make_delegated_launcher_script(cls, cfg: dict[str, Any]) -> str:
-        cfg_file = CallableRepoLauncherClass.save_config(cfg)
+        cfg_file = CallableEnvSwitchingRepoLauncherClass.save_config(cfg)
         return f"""
 from bqm.harness.file_launcher import FileLauncher
 FileLauncher(config="{cfg_file}")
@@ -105,5 +105,16 @@ FileLauncher(config="{cfg_file}")
         # logger.info("FINISHED target process")
 
 
-class RepoLauncher(metaclass=CallableRepoLauncherClass):
+class EnvSwitchingRepoLauncher(metaclass=CallableEnvSwitchingRepoLauncherClass):
+    """
+    Entry point launcher which:
+       0. obtains the launch config
+       1. checks out or updates the code from repo
+       2. creates or verifies the target environment
+       3. launches the target file using a python procesws with the required target environment
+
+       Usage: EnvSwitchingRepoLauncher(config) where config is some json containing either the config itself or the config descriptor
+
+    """
+
     pass
