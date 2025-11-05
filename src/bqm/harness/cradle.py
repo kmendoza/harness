@@ -1,4 +1,5 @@
 import queue
+import sys
 from abc import ABC, abstractmethod
 from multiprocessing import Queue
 from typing import Any
@@ -11,6 +12,9 @@ class ProcessHarnessError(Exception):
 
 
 class Cradle(ABC):
+
+    def __init__(self, exit_on_error: bool = True):
+        self._exit_on_error = exit_on_error
 
     @abstractmethod
     def run(self, *args): ...
@@ -35,4 +39,8 @@ class Cradle(ABC):
         return self._config
 
     def __call__(self):
-        return self.run()
+        res = self.run()
+        if self._exit_on_error and res:
+            sys.exit(int(res))
+        else:
+            return res
