@@ -12,4 +12,4 @@ def foo(self, *args) -> int:
 
 if __name__ == "__main__":
     rv = Launcher(job=foo)
-    pass
+    assert rv == 1
