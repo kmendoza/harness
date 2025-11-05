@@ -1,6 +1,6 @@
-from bqm.harness import RepoLauncher
+from bqm.harness import FileLauncher
 
-RepoLauncher(
+FileLauncher(
     config={
         "source": {
             "repo": "git@github.com:kmendoza/harness_test.git",
@@ -12,6 +12,9 @@ RepoLauncher(
             # "entry-point":"__main__",
             "file-to-run": "module/long_running_test.py",
             "entry-point": "xyz",
+        },
+        "env": {
+            "name": "htest",
         },
         "harness": {
             "interface": "0.0.0.0",

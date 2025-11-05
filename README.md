@@ -20,6 +20,9 @@ The Harness runs in complete separatation from the actual job which has its own 
 Parameters `--harness-config` / `-x `should be reserved for use by the harness and jobs should ignore it. Otherwise parameter parsing is unaffected
 
 
+### installing
+pip install git+ssh://git@github.com/kmendoza/harness.git@v0.0.4#subdirectory=src
+
 ### Example
 ---
 

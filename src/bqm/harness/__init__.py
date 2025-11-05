@@ -3,6 +3,7 @@ from bqm.harness.conf.config_parser import ConfigParser
 from bqm.harness.cradle import Cradle
 from bqm.harness.launcher import Launcher, LauncherError
 from bqm.harness.repo_launcher import RepoLauncher
+from bqm.harness.file_launcher import FileLauncher
 
 __all__ = [
     "Command",
@@ -11,4 +12,5 @@ __all__ = [
     "Launcher",
     "LauncherError",
     "RepoLauncher",
+    "FileLauncher",
 ]

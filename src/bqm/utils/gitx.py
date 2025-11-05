@@ -65,7 +65,7 @@ class GitRepo:
             logger.info(f"✅  Remote repo {self._repo_url} is reachabble")
             return True
         except git.exc.GitCommandError as gce:
-            logger.warning(f"⚡ Remote repo {self._repo_url} is not reachabble")
+            logger.warning(f"⚡ Remote repo {self._repo_url} is not reachabble. error: {gce}")
             return False
 
     def __examine_offline_repo(self) -> bool:
@@ -175,9 +175,9 @@ class GitRepo:
                 merge_base = self._repo.merge_base(local_commit, remote_commit)
 
                 if merge_base and merge_base[0] == local_commit:
-                    logger.info(f"⬇️ Local branch is behind remote. Pulling changes...")
+                    logger.info("⬇️ Local branch is behind remote. Pulling changes...")
                     origin.pull(self._branch)
-                    logger.info(f"✅ Repository updated successfully")
+                    logger.info("✅ Repository updated successfully")
                     logger.info(f"🚀 Current commit: {self._repo.head.commit.hexsha[:8]} - {self._repo.head.commit.message.strip()}")
                 else:
                     logger.warning("Local branch has diverged from remote")
@@ -340,27 +340,27 @@ class GitRepo:
         logger.info("+----------------------")
 
 
-if __name__ == "__main__":
-    # Example with smart update enabled (default)
-    repo = GitRepo(
-        repo_url="git@github.com:kmendoza/harness_test.git",
-        branch="test-branch",
-        workdir="/data/tst/",
-        # always_clone=False,
-        force_offline=True,
-    )
-    repo.print_info()
+# if __name__ == "__main__":
+#     # Example with smart update enabled (default)
+#     repo = GitRepo(
+#         repo_url="git@github.com:kmendoza/harness_test.git",
+#         branch="test-branch",
+#         workdir="/data/tst/",
+#         # always_clone=False,
+#         force_offline=True,
+#     )
+#     repo.print_info()
 
-    # Example without smart update (original behavior)
-    # repo = GitRepo(
-    #     repo_url="git@github.com:kmendoza/harness_test.git",
-    #     branch="cleanup_creation",
-    #     workdir="/tmp/",
-    #     smart_update=False,  # Always clone fresh
-    # )
+#     # Example without smart update (original behavior)
+#     # repo = GitRepo(
+#     #     repo_url="git@github.com:kmendoza/harness_test.git",
+#     #     branch="cleanup_creation",
+#     #     workdir="/tmp/",
+#     #     smart_update=False,  # Always clone fresh
+#     # )
 
-    # repo.checkout_commit("8698792d02ff2f139dd4eb72b5cb5a225c24b29a")
-    # repo.print_info()
+#     # repo.checkout_commit("8698792d02ff2f139dd4eb72b5cb5a225c24b29a")
+#     # repo.print_info()
 
-    # repo.checkout_commit("29e6bb154a36c825f0b7b3ea211f6278aad55517")
-    # repo.print_info()
+#     # repo.checkout_commit("29e6bb154a36c825f0b7b3ea211f6278aad55517")
+#     # repo.print_info()

@@ -25,7 +25,8 @@ class ServiceConfig:
             # 2. supplied a string, seems to be a valid path - read json from file
             if Path(config).exists():
                 try:
-                    return json.load(config)
+                    with open(config, "r") as file:
+                        return json.load(file)
                 except Exception as e:
                     raise ServiceConfigError(f"Path {config} exists but does not contain valid JSON. Load error {e}")
             else:

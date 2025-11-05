@@ -48,7 +48,9 @@ class Mamba:
         if not mamba_path.exists():
             raise MambaError(f"Specified mamba path {mamba_path} does not exist")
 
-    def __mamba_exec(self, conda_cmd: str, env: str | None = None, use_conda: bool = False) -> subprocess.CompletedProcess:
+    def __mamba_exec(
+        self, conda_cmd: str, env: str | None = None, capture_output: bool = True, use_conda: bool = False
+    ) -> subprocess.CompletedProcess:
         """
         launch a mamba command subprocess
         always load the mamba rc
@@ -63,7 +65,29 @@ class Mamba:
         result = subprocess.run(
             ["bash", "-c", f"source {self._rc_file} {activate_env} && {mamba} {conda_cmd}"],
             executable="/bin/bash",
-            capture_output=True,
+            capture_output=capture_output,
+            text=True,
+        )
+        return result
+
+    def __mamba_exec_run(
+        self, run_cmd: str, env: str | None = None, capture_output: bool = False, use_conda: bool = False
+    ) -> subprocess.CompletedProcess:
+        """
+        specialised mamba mamba launch for mamba run.
+        """
+        if env and not self.env_exists(env):
+            raise MambaError(f"Error. Specified environment does not exist: {env}")
+
+        mamba = "mamba" if not use_conda else "conda"
+        activate_env = f" && {mamba} activate {env}" if env else ""
+        mamba_env = f" -n {env}" if env else ""
+        mamba_run_tty = " --live-stream" if not capture_output else ""
+
+        result = subprocess.run(
+            ["bash", "-c", f"source {self._rc_file}  && {mamba} run {mamba_env} {mamba_run_tty} python {run_cmd}"],
+            executable="/bin/bash",
+            capture_output=capture_output,
             text=True,
         )
         return result
@@ -72,8 +96,6 @@ class Mamba:
         result = subprocess.run(
             ["bash", "-c", f"source {self._rc_file} && mamba activate {env} && pip {pip_cmd}"],
             executable="/bin/bash",
-            capture_output=True,
-            text=True,
         )
         return result
 
@@ -241,6 +263,34 @@ class Mamba:
             if not self._last_install_log["success"]:
                 raise MambaError(f"Error during MAMBA pakcage install command: {cmd}")
             return self._last_install_log
+
+    def run(
+        self,
+        env: str | None,
+        file: str | Path,
+    ):
+        if not Path(file).exists():
+            raise MambaError(f"File {file} does not exist.")
+
+        envv = f"-n {env}" if env else ""
+        cmd = f"run {envv} python {file}"
+
+        res = self.__mamba_exec(cmd, capture_output=False)
+
+        if res.returncode != 0:
+            raise MambaError(f"Error {res.returncode} while trying to run python file {cmd}")
+
+    def run_code(
+        self,
+        env: str | None,
+        code: str,
+    ):
+
+        run_cmd = f"-c '{code}'"
+        res = self.__mamba_exec_run(env=env, run_cmd=run_cmd, capture_output=False)
+
+        if res.returncode != 0:
+            raise MambaError(f"Error {res.returncode} while trying to run python file {run_cmd}")
 
     def pip_install(
         self,
