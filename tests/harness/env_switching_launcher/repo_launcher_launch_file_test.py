@@ -18,7 +18,7 @@ EnvSwitchingRepoLauncher(
         },
         "harness": {
             "interface": "0.0.0.0",
-            "port": 3000,
+            "port": 3333,
         },
         "target-config": {
             "a": 1,
