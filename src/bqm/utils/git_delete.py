@@ -5,9 +5,9 @@
 
 # import git
 
-# from bqm.utils.logconfig import make_logger
+# from bqm.utils.logconfig import LogFuzz
 
-# logger = make_logger(__name__)
+# logger = LogFuzz.make_logger(__name__)
 
 
 # class GitOperatorError(Exception):
@@ -49,7 +49,7 @@
 #                 branch=self._branch,
 #                 depth=self._depth,
 #             )
-            
+
 #             self._cloned = True
 
 #             logger.info(f"Repository cloned to: {self._repo_dir}")

@@ -3,9 +3,9 @@ from typing import Any
 
 from jsonschema import validate
 
-from bqm.utils.logconfig import make_logger
+from bqm.utils.logconfig import LogFuzz
 
-logger = make_logger(__name__)
+logger = LogFuzz.make_logger(__name__)
 
 
 class PackageError(Exception):

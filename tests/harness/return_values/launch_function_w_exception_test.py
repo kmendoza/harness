@@ -1,9 +1,7 @@
-import time
-
 from bqm.harness import Launcher
-from bqm.utils.logconfig import make_logger
+from bqm.utils.logconfig import LogFuzz
 
-logger = make_logger(__name__)
+logger = LogFuzz.make_logger(__name__)
 
 
 def foo(self, *args) -> int:

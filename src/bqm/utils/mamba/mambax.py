@@ -5,10 +5,10 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from bqm.utils.logconfig import make_logger
+from bqm.utils.logconfig import LogFuzz
 from bqm.utils.mamba.package import PackageList
 
-logger = make_logger(__name__)
+logger = LogFuzz.make_logger(__name__)
 
 
 class MambaError(Exception):

@@ -6,9 +6,9 @@ from typing import Any, Callable
 from bqm.harness.conf.service_config import ServiceConfig
 from bqm.harness.cradle import Cradle
 from bqm.harness.proc_impl import ProcessHarness
-from bqm.utils.logconfig import init_logging, make_logger
+from bqm.utils.logconfig import LogFuzz
 
-logger = make_logger(__name__)
+logger = LogFuzz.make_logger(__name__)
 
 
 class LauncherError(Exception):
@@ -33,7 +33,7 @@ class CallableLauncherClass(type):
             raise LauncherError(f"Job must be a Cradle or a Callable. Dont know how to run {type(job)}")
 
         if "logging" in conf:
-            init_logging(conf["logging"])
+            LogFuzz.init_logging(conf["logging"])
 
         target._config = conf.get("target-config", {})
 

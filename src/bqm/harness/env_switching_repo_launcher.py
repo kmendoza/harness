@@ -10,10 +10,10 @@ from bqm.harness.launcher import Launcher
 from bqm.utils.entry.runner import EntryPointScanner
 from bqm.utils.entry.wrapper import CallableWrapper
 from bqm.utils.gitx import GitRepo
-from bqm.utils.logconfig import init_logging, make_logger
+from bqm.utils.logconfig import LogFuzz
 from bqm.utils.mamba.mambax import Mamba
 
-logger = make_logger(__name__)
+logger = LogFuzz.make_logger(__name__)
 
 
 class CallableRepoLauncherClassError(Exception):
@@ -30,12 +30,15 @@ class CallableEnvSwitchingRepoLauncherClass(type):
         return f.name
 
     @classmethod
-    def make_delegated_launcher_script(cls, cfg: dict[str, Any]) -> str:
+    def make_delegated_launcher_script(cls, cfg: dict[str, Any]) -> tuple[str, str]:
         cfg_file = CallableEnvSwitchingRepoLauncherClass.save_config(cfg)
-        return f"""
+        return (
+            f"""
 from bqm.harness.file_launcher import FileLauncher
 FileLauncher(config="{cfg_file}")
-"""
+""",
+            cfg_file,
+        )
 
     def __call__(
         cls,
@@ -45,7 +48,9 @@ FileLauncher(config="{cfg_file}")
         conf = ServiceConfig.get_config(config)
 
         if "logging" in conf:
-            init_logging(conf["logging"])
+            LogFuzz.init_logging(conf["logging"])
+        else:
+            LogFuzz.init_logging_default()
 
         # check out the repo
         if "source" not in conf:
@@ -72,37 +77,14 @@ FileLauncher(config="{cfg_file}")
             env_conf = conf["env"]
             if "name" in env_conf:
                 target_env = env_conf["name"]
-                # cfg_file = CallableRepoLauncherClass.save_config(config)
-                # FileLauncher(config=cfg_file)
-                auto_code = cls.make_delegated_launcher_script(conf)
+                auto_code, tmp_cfg_file = cls.make_delegated_launcher_script(conf)
                 mamba = Mamba()
                 res = mamba.run_code(env=target_env, code=auto_code)
+                Path(tmp_cfg_file).unlink()
             else:
                 raise CallableRepoLauncherClassError("Expecting environment name key (env.name) in config. Not found")
-        # # create path to source within the repo
-        # subfolder = src_conf.get("src-subfolder", ".")
-        # target_file = src_conf["file-to-run"]
-        # target_entry_point = src_conf.get("entry-point", None)
-
-        # checkout_path = repo.local_dir() / subfolder
-        # src_path = checkout_path / target_file
-        # # src_path = Path(src_conf["workdir"]) / 'harness_test' / subfolder / target_file
-        # if not src_path.exists():
-        #     raise CallableRepoLauncherClassError(
-        #         f"Inferred root source path does not exist: {src_path}. Most likely the root_subfolder "
-        #         f"{subfolder} does not exist within the repo {src_conf['repo']} "
-        #     )
-
-        # # insesrt the root of the checked out source into python path
-        # sys.path.insert(0, checkout_path.as_posix())
-        # epr = EntryPointScanner()
-        # _, entry_points = epr.scan(src_path)
-        # selected_entry_point = cls.select_entry_point(entry_points, target_entry_point)
-
-        # logger.info("STARTING target process")
-        # Launcher(job=selected_entry_point, config=conf)
-        # # selected_entry_point()
-        # logger.info("FINISHED target process")
+        else:
+            FileLauncher(config=config)
 
 
 class EnvSwitchingRepoLauncher(metaclass=CallableEnvSwitchingRepoLauncherClass):
