@@ -208,7 +208,7 @@ class Mamba:
         if python_version:
             self.install(env=env, package="python", version=python_version)
 
-    def list_packages(self, env: str):
+    def list_packages(self, env: str) -> PackageList:
         """
         mamba list -n <env>
         """
