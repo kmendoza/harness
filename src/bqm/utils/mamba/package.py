@@ -132,16 +132,16 @@ class PackageList:
 
     def __init__(self, package_spec_json: dict[str, Any]):
         self.validate(package_spec_json)
-        self._pacakges = {pck.name(): pck for pck in [Package(p) for p in package_spec_json]}
+        self._packages = {pck.name(): pck for pck in [Package(p) for p in package_spec_json]}
 
     def contains(self, package: str) -> bool:
-        return package in self._pacakges
+        return package in self._packages
 
     def all(self) -> list[str]:
-        return list(self._pacakges.keys())
+        return list(self._packages.keys())
 
     def get(self, package: str) -> Package:
         if self.contains(package):
-            return self._pacakges[package]
+            return self._packages[package]
         else:
             raise PackageError(f"Package {package} not present in the pacakge list")
