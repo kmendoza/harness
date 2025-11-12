@@ -1,5 +1,7 @@
+from pathlib import Path
 from typing import Any
 
+import yaml
 from jsonschema import validate
 
 from bqm.utils.logconfig import LogFuzz
@@ -69,6 +71,9 @@ class EnvManager:
                 },
             },
             "required": ["name"],
+            "dependentRequired": {
+                "verify": ["recipe"],
+            },
             "additionalProperties": False,
         }
         validate(instance=self._json, schema=schema)
@@ -76,22 +81,56 @@ class EnvManager:
     def name(self) -> str:
         return self._json["name"]
 
-    def __use_existing_only(self) -> bool:
-        return "create" not in self._json or self._json["create"] == "never"
-
     def __tst_val(self, name: str, value: Any) -> bool:
         return name in self._json and self._json[name] == value
 
+    def __use_existing_only(self) -> bool:
+        # return "create" not in self._json or self._json["create"] == "never"
+        return not self.__create()
+
     def __create(self) -> bool:
         return self.__tst_val("create", "always")
-        # return "create" in self._json and self._json["create"] == "always"
 
     def __debug(self) -> bool:
         return self.__tst_val("debug", True)
-        # return "debug" in self._json and self._json["debug"]
 
     def __verify(self) -> bool:
         return self.__tst_val("verify", True)
+
+    def __has_recipe(self) -> bool:
+        return "recipe" in self._json
+
+    def __get_recipe(self) -> bool:
+        if self.__has_recipe():
+            return self._json["recipe"]
+        else:
+            return None
+
+    def __get_conda_file(self) -> Path | None:
+        rcp = self.__get_recipe()
+        if rcp and "conda-file" in rcp:
+            return Path(rcp["conda-file"])
+        else:
+            return None
+
+    def __read_conda_file(self, file: Path):
+        if not file.exists():
+            raise EnvManagerError(f"Specified conda env file does not exist: {file}.")
+
+        with open(file, "r") as f:
+            env = yaml.safe_load(f)
+        for dep in env.get("dependencies", []):
+            if isinstance(dep, dict):
+                # Handle pip dependencies
+                if "pip" in dep:
+                    print("  pip packages:")
+                    for pip_pkg in dep["pip"]:
+                        print(f"    - {pip_pkg}")
+            else:
+                # Regular conda dependencies
+                print(f"  - {dep}")
+
+        return env
 
     def setup(self):
         mmb = Mamba()
@@ -118,7 +157,19 @@ class EnvManager:
 
             logger.info(f" 🚀  You are good to go with env {env_name} ")
         elif self.__create():
-            pass
+            mmb = Mamba()
+            if mmb.env_exists(env_name):
+                pass
+            else:
+                pass
+
+                # mmb.create_env()
+
+            conda_env_file = self.__get_conda_file()
+            if conda_env_file:
+                self.__read_conda_file(conda_env_file)
+                pass
+
         pass
 
 
@@ -126,13 +177,13 @@ if __name__ == "__main__":
     logger.info("=== START ===")
     env = EnvManager(
         {
-            "name": "htest3",
-            "create": "never",
+            "name": "htest3_1",
+            # "create": "never",
+            "create": "always",
             "verify": True,
             "debug": True,
-            # "create": "always",
             "recipe": {
-                "conda-file": "/home/iztok/work/hwork/harness_test/env/harness_test.yml",
+                "conda-file": "/home/iztok/work/hwork/harness_test/env/env.yaml",
                 "pip-reqs-file": "sadf",
                 "pkg-list": [],
             },
