@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import Any
 
-import yaml
 from jsonschema import validate
 
 from bqm.utils.logconfig import LogFuzz
+from bqm.utils.mamba.env_recipe import EnvRecipe
 from bqm.utils.mamba.mambax import Mamba
 
 logger = LogFuzz.make_logger(__name__)
@@ -113,25 +113,6 @@ class EnvManager:
         else:
             return None
 
-    def __read_conda_file(self, file: Path):
-        if not file.exists():
-            raise EnvManagerError(f"Specified conda env file does not exist: {file}.")
-
-        with open(file, "r") as f:
-            env = yaml.safe_load(f)
-        for dep in env.get("dependencies", []):
-            if isinstance(dep, dict):
-                # Handle pip dependencies
-                if "pip" in dep:
-                    print("  pip packages:")
-                    for pip_pkg in dep["pip"]:
-                        print(f"    - {pip_pkg}")
-            else:
-                # Regular conda dependencies
-                print(f"  - {dep}")
-
-        return env
-
     def setup(self):
         mmb = Mamba()
         env_name = self.name()
@@ -163,11 +144,11 @@ class EnvManager:
             else:
                 pass
 
-                # mmb.create_env()
-
+            # mmb.create_env()
+            recipe = EnvRecipe()
             conda_env_file = self.__get_conda_file()
             if conda_env_file:
-                self.__read_conda_file(conda_env_file)
+                recipe.add_conda_file(conda_env_file)
                 pass
 
         pass
