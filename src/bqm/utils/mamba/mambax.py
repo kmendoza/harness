@@ -240,6 +240,9 @@ class Mamba:
         if isinstance(spec, str):
             spec = [spec]
 
+        if isinstance(spec, list):
+            spec = [str(s) for s in spec]
+
         pck_spec_str = " ".join(p for p in spec)
 
         channel = f"-c {channel}" if channel else ""

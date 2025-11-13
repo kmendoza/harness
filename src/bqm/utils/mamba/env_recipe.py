@@ -46,6 +46,9 @@ class PackageSpec:
     def build(self) -> str:
         return self._build
 
+    def __str__(self) -> str:
+        return self.spec()
+
 
 class CondaPackageSpec(PackageSpec):
     def __init__(self, spec: str, channel: str):
@@ -77,7 +80,7 @@ class EnvRecipe:
     def add_conda_file(self, file: Path | str):
         self._all_pkgs.extend(CondaFileParser.parse_conda_file(file))
 
-    def __check_python(self, file: Path | str, add_if_none: bool = False):
+    def __check_python(self):
         all_pkgs = self._all_pkgs.copy()
         python_pkg = [p for p in all_pkgs if p.name() == "python"]
         if len(python_pkg) > 1:
@@ -97,9 +100,9 @@ class EnvRecipe:
         pkgs_by_channel = {}
         for p in all_pkgs:
             pckg_chnl = p.channel()
-            if pckg_chnl in pkgs_by_channel:
-                self._pkgs[pckg_chnl] = []
-            self._pkgs[pckg_chnl].append(p)
+            if pckg_chnl not in pkgs_by_channel:
+                pkgs_by_channel[pckg_chnl] = []
+            pkgs_by_channel[pckg_chnl].append(p)
         return pkgs_by_channel
 
     def create(self):
@@ -107,13 +110,14 @@ class EnvRecipe:
             logger.warning("WARNING. no packages specified. Creating and empty environment")
         mamba = Mamba()
         if mamba.env_exists(self._name):
-            mamba.remove_env(self._name)
+            mamba.remove_env(self._name, waive_safety=True)
 
         mamba.create_env(self._name)
 
         pks_by_channel = self.get_spec_list(check_python=True)
         for ch, spcs in pks_by_channel.items():
-            mamba.install_specs(spcs, str)
+            if ch == "conda-forge":
+                mamba.install_specs(self._name, spcs, ch)
 
 
 class CondaFileParser:
