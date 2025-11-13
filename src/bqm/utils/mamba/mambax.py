@@ -227,6 +227,35 @@ class Mamba:
         # package_lines = [l.split() for l in res.stdout.split("\n") if l.strip() and not l.strip().startswith("#")]
         # return {l[0]: {"package": l[0], "version": l[1], "build": l[2], "channel": l[3]} for l in package_lines}
 
+    def install_specs(
+        self,
+        env: str,
+        spec: str | list[str],
+        channel: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        mamba install -n <env> -c <channel> [<pacakge>=<version>=<build>]
+        """
+
+        if isinstance(spec, str):
+            spec = [spec]
+
+        pck_spec_str = " ".join(p for p in spec)
+
+        channel = f"-c {channel}" if channel else ""
+        cmd = f"install -n {env} {channel} {pck_spec_str} -y  --json"
+
+        res = self.__mamba_exec(cmd)
+
+        if res.returncode != 0:
+            logger.error(res.stderr)
+            raise MambaError(f"Error during pakcage install command: {cmd}")
+        else:
+            self._last_install_log = json.loads(res.stdout)
+            if not self._last_install_log["success"]:
+                raise MambaError(f"Error during MAMBA pakcage install command: {cmd}")
+            return self._last_install_log
+
     def install(
         self,
         env: str,

@@ -12,19 +12,34 @@ class EnvRecipeError(Exception):
 
 
 class PackageSpec:
-    def __init__(self, name: str, version: str | None, build: str | None, channel: str):
+    def __init__(self, spec: str, name: str, version: str | None, build: str | None, channel: str):
+        self._spec = spec
         self._name = name
         self._ver = version
         self._build = build
         self._channel = channel
 
     @staticmethod
-    def from_conda_spec(spec: str, channel: str = "conda-forge") -> "PackageSpec":
-        name, ver, build = spec.split("=")
-        return PackageSpec(name, ver, build, channel)
+    def from_conda_spec(spec: str, channel: str = "conda-forge") -> "CondaPackageSpec":
+        return CondaPackageSpec(spec, channel)
 
     def __repr__(self) -> str:
         return f"{self._name} :: {self._ver} :: {self._build} :: {self._channel}"
+
+    def spec(self) -> str:
+        return self._spec
+
+
+class CondaPackageSpec(PackageSpec):
+    def __init__(self, spec: str, channel):
+        name, ver, build = spec.split("=")
+        PackageSpec.__init__(self, spec, name, ver, build, channel)
+
+
+class PipPackageSpec(PackageSpec):
+    def __init__(self, spec: str, channel):
+        name, ver = spec.split("=")
+        PackageSpec.__init__(name, ver, channel)
 
 
 class EnvRecipe:
@@ -34,6 +49,7 @@ class EnvRecipe:
         python version uneless overriden
         """
         self._py_ver = default_python_version
+        self._pkgs = {}
 
     def add_conda_file(self, file: Path | str):
         pkgs = CondaFileParser.parse_conda_file(file)
@@ -59,9 +75,11 @@ class CondaFileParser:
                 if "pip" in dep:
                     print("  pip packages:")
                     for pip_pkg in dep["pip"]:
-                        print(f"    - {pip_pkg}")
+                        ps = PackageSpec.from_conda_spec(pip_pkg)
+                        pkgs.append(ps)
+                        logger.info(f"conda file spec: {ps}")
             else:
                 ps = PackageSpec.from_conda_spec(dep)
                 pkgs.append(ps)
                 logger.info(f"conda file spec: {ps}")
-        return env
+        return pkgs
