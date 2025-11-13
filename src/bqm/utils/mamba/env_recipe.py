@@ -3,6 +3,7 @@ from pathlib import Path
 import yaml
 
 from bqm.utils.logconfig import LogFuzz
+from bqm.utils.mamba.mambax import Mamba
 
 logger = LogFuzz.make_logger(__name__)
 
@@ -60,31 +61,59 @@ class PipPackageSpec(PackageSpec):
 
 class EnvRecipe:
 
-    def __init__(self, default_python_version: str = "3.13"):
+    def __init__(
+        self,
+        name: str,
+        path: str | Path | None = None,
+        default_python_version: str = "3.13",
+    ):
         """
         python version uneless overriden
         """
         self._py_ver = default_python_version
         self._all_pkgs = []
-
-    def pkgs_by_channel(self):
-        pkgs = {}
-        for p in pkgs:
-            pckg_chnl = p.channel()
-            if pckg_chnl in pkgs:
-                self._pkgs[pckg_chnl] = []
-            self._pkgs[pckg_chnl].append(p)
-        return pkgs
+        self._name = name
 
     def add_conda_file(self, file: Path | str):
         self._all_pkgs.extend(CondaFileParser.parse_conda_file(file))
 
-    def summarise(self, file: Path | str):
-        python_pkg = [p for p in self._all_pkgs if p.name() == "python"]
+    def __check_python(self, file: Path | str, add_if_none: bool = False):
+        all_pkgs = self._all_pkgs.copy()
+        python_pkg = [p for p in all_pkgs if p.name() == "python"]
         if len(python_pkg) > 1:
             raise EnvRecipeError(f"Found more than one python package spec. {python_pkg}")
         if len(python_pkg) < 1:
-            self._all_pkgs.append(PackageSpec.from_conda_spec(f"python={self._py_ver}"))
+            # if no python in recipe, addconda spec for default version
+            all_pkgs.append(PackageSpec.from_conda_spec(f"python={self._py_ver}"))
+
+        return all_pkgs
+
+    def get_spec_list(self, check_python: bool = False):
+        if check_python:
+            all_pkgs = self.__check_python()
+        else:
+            all_pkgs = self._all_pkgs.copy()
+
+        pkgs_by_channel = {}
+        for p in all_pkgs:
+            pckg_chnl = p.channel()
+            if pckg_chnl in pkgs_by_channel:
+                self._pkgs[pckg_chnl] = []
+            self._pkgs[pckg_chnl].append(p)
+        return pkgs_by_channel
+
+    def create(self):
+        if len(self._all_pkgs) < 1:
+            logger.warning("WARNING. no packages specified. Creating and empty environment")
+        mamba = Mamba()
+        if mamba.env_exists(self._name):
+            mamba.remove_env(self._name)
+
+        mamba.create_env(self._name)
+
+        pks_by_channel = self.get_spec_list(check_python=True)
+        for ch, spcs in pks_by_channel.items():
+            mamba.install_specs(spcs, str)
 
 
 class CondaFileParser:
@@ -104,7 +133,7 @@ class CondaFileParser:
             if isinstance(dep, dict):
                 # Handle pip dependencies
                 if "pip" in dep:
-                    print("  pip packages:")
+                    logger.info("parsing conda pip section:")
                     for pip_pkg in dep["pip"]:
                         ps = PackageSpec.from_pip_spec(pip_pkg)
                         pkgs.append(ps)
@@ -112,5 +141,5 @@ class CondaFileParser:
             else:
                 ps = PackageSpec.from_conda_spec(dep)
                 pkgs.append(ps)
-                logger.info(f"conda file spec: {dep}")
+                logger.info(f"conda [forge] file spec: {dep}")
         return pkgs

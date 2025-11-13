@@ -145,11 +145,13 @@ class EnvManager:
                 pass
 
             # mmb.create_env()
-            recipe = EnvRecipe()
+            recipe = EnvRecipe(env_name)
             conda_env_file = self.__get_conda_file()
             if conda_env_file:
                 recipe.add_conda_file(conda_env_file)
                 pass
+
+            recipe.create()
 
         pass
 
@@ -164,7 +166,7 @@ if __name__ == "__main__":
             "verify": True,
             "debug": True,
             "recipe": {
-                "conda-file": "/home/iztok/work/hwork/harness_test/env/env.yaml",
+                "conda-file": "/home/iztok/work/hwork/harness_test/env/env_conda_basic.yaml",
                 "pip-reqs-file": "sadf",
                 "pkg-list": [],
             },
