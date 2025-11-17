@@ -59,7 +59,7 @@ FileLauncher(config="{cfg_file}")
             repo_url=src_conf["repo"],
             branch=src_conf["branch"],
             workdir=src_conf["workdir"],
-            force_offline=src_conf.get("use-local", "."),
+            force_offline=src_conf.get("use-local", True),
         )
         repo.print_info()
 

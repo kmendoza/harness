@@ -31,6 +31,7 @@ class EnvManager:
                     "create": "string",
                     "enum": [
                         "never",
+                        "reuse",
                         "always",
                     ],
                 },
@@ -113,6 +114,13 @@ class EnvManager:
         else:
             return None
 
+    def __get_reqs_file(self) -> Path | None:
+        rcp = self.__get_recipe()
+        if rcp and "pip-reqs-file" in rcp:
+            return Path(rcp["pip-reqs-file"])
+        else:
+            return None
+
     def setup(self):
         mmb = Mamba()
         env_name = self.name()
@@ -149,10 +157,12 @@ class EnvManager:
             conda_env_file = self.__get_conda_file()
             if conda_env_file:
                 recipe.add_conda_file(conda_env_file)
+            pip_ennv_file = self.__get_reqs_file()
+            if pip_ennv_file:
+                recipe.add_reqs_file(pip_ennv_file)
                 pass
 
             recipe.create()
-
         pass
 
 
@@ -162,12 +172,13 @@ if __name__ == "__main__":
         {
             "name": "htest3_1",
             # "create": "never",
+            # "create": "always",
             "create": "always",
             "verify": True,
             "debug": True,
             "recipe": {
-                "conda-file": "/home/iztok/work/hwork/harness_test/env/env_conda_basic.yaml",
-                "pip-reqs-file": "sadf",
+                # "conda-file": "/home/iztok/work/hwork/harness_test/env/env_conda_basic.yaml",
+                "pip-reqs-file": "/home/iztok/work/hwork/harness_test/env/reqs_basic.txt",
                 "pkg-list": [],
             },
         },

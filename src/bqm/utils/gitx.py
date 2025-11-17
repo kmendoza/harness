@@ -39,7 +39,7 @@ class GitRepo:
         if self._force_offline:
             self._repo = self.get_offline_repo()
             logger.info(
-                f"🚀  Using a local clone of repo: {self._repo_url}. Commit: {self._repo.head.commit.hexsha[:8]} - {self._repo.head.commit.message.strip()}"
+                f"🚀  FORCEDly Using a local clone of repo: {self._repo_url}. Commit: {self._repo.head.commit.hexsha[:8]} - {self._repo.head.commit.message.strip()}"
             )
         elif not self.__check_connection() and self._offline_ok:
             self._repo = self.get_offline_repo()

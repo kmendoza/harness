@@ -52,7 +52,7 @@ class PackageSpec:
 
 class CondaPackageSpec(PackageSpec):
     def __init__(self, spec: str, channel: str):
-        name, ver, build = spec.split("=")
+        name, ver, build = (spec.split("=") + [None])[:3]
         PackageSpec.__init__(self, spec, name, ver, build, channel)
 
 
@@ -78,7 +78,10 @@ class EnvRecipe:
         self._name = name
 
     def add_conda_file(self, file: Path | str):
-        self._all_pkgs.extend(CondaFileParser.parse_conda_file(file))
+        self._all_pkgs.extend(CondaFileParser.parse(file))
+
+    def add_reqs_file(self, file: Path | str):
+        self._all_pkgs.extend(PipReqsParser.parse(file))
 
     def __check_python(self):
         all_pkgs = self._all_pkgs.copy()
@@ -110,20 +113,30 @@ class EnvRecipe:
             logger.warning("WARNING. no packages specified. Creating and empty environment")
         mamba = Mamba()
         if mamba.env_exists(self._name):
+            logger.warning(f" 💀 WARNING. Deleting existing environment: {self._name}")
             mamba.remove_env(self._name, waive_safety=True)
 
+        logger.info(f" 🚀 Recreating new empty environment: {self._name}")
         mamba.create_env(self._name)
 
         pks_by_channel = self.get_spec_list(check_python=True)
-        for ch, spcs in pks_by_channel.items():
+
+        for ch in ["conda-forge", "pypi"]:
+            if ch not in pks_by_channel:
+                continue
+            spcs = pks_by_channel[ch]
             if ch == "conda-forge":
                 mamba.install_specs(self._name, spcs, ch)
+            elif ch == "pypi":
+                mamba.pip_install_specs(self._name, spcs)
+            else:
+                logger.error(f" ERROR. Unkown channel type: {ch}. This is likely a BUG")
 
 
 class CondaFileParser:
 
     @staticmethod
-    def parse_conda_file(file: Path | str) -> list[PackageSpec]:
+    def parse(file: Path | str) -> list[PackageSpec]:
 
         fle = Path(file)
         if not fle.exists():
@@ -141,9 +154,29 @@ class CondaFileParser:
                     for pip_pkg in dep["pip"]:
                         ps = PackageSpec.from_pip_spec(pip_pkg)
                         pkgs.append(ps)
-                        logger.info(f"conda [pip] file spec: {pip_pkg}")
+                        logger.info(f"conda [pip] package spec: {pip_pkg}")
             else:
                 ps = PackageSpec.from_conda_spec(dep)
                 pkgs.append(ps)
-                logger.info(f"conda [forge] file spec: {dep}")
+                logger.info(f"conda [forge] package spec: {dep}")
+        return pkgs
+
+
+class PipReqsParser:
+
+    @staticmethod
+    def parse(file: Path | str) -> list[PackageSpec]:
+
+        fle = Path(file)
+        if not fle.exists():
+            raise Exception(f"  ❌ File {fle} does not exist")
+
+        with open(fle, "r") as f:
+            specs = f.readlines()
+
+        pkgs = []
+        for spec in specs:
+            ps = PackageSpec.from_pip_spec(spec.strip())
+            pkgs.append(ps)
+            logger.info(f"pip reqs package spec: {spec}")
         return pkgs

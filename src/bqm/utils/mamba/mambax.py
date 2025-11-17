@@ -331,9 +331,7 @@ class Mamba:
         version: str | list[str] | None = None,
         index_url: str | None = None,
     ) -> str:
-        """
-        mamba install -n <env> -c <channel> [<pacakge>=<version>_<build>]
-        """
+        """ """
 
         def mk_pkg_str(pspec: tuple[str, str]) -> str:
             ver_str = f"=={pspec[1]}" if pspec[1] else ""
@@ -348,6 +346,41 @@ class Mamba:
 
         pspecs = self.__line_up_packagespecs(package, version, None)
         pck_spec_str = " ".join(mk_pkg_str(p) for p in pspecs)
+
+        pkg_index = f"--index-url {index_url}" if index_url else ""
+
+        cmd = f"install {pkg_index} {pck_spec_str} "
+
+        res = self.__pip_exec(cmd, env)
+
+        if res.returncode != 0:
+            logger.error(res.stderr)
+            raise MambaError(f"Error during PIP pakcage install command: {cmd}")
+        else:
+            return res.stdout
+
+    def pip_install_specs(
+        self,
+        env: str,
+        spec: str | list[str],
+        index_url: str | None = None,
+    ) -> dict[str, Any]:
+        """ """
+
+        if isinstance(spec, str):
+            spec = [spec]
+
+        if isinstance(spec, list):
+            spec = [str(s) for s in spec]
+
+        pck_spec_str = " ".join(p for p in spec)
+
+        if not self.env_exists(env):
+            raise MambaError(f"Target environment {env} does NOT exist")
+
+        installed = self.list_packages(env)
+        if "pip" not in installed.all():
+            raise MambaError(f"Target environment {env} does not have pip installed. Install first.")
 
         pkg_index = f"--index-url {index_url}" if index_url else ""
 
