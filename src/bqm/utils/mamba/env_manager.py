@@ -86,11 +86,13 @@ class EnvManager:
         return name in self._json and self._json[name] == value
 
     def __use_existing_only(self) -> bool:
-        # return "create" not in self._json or self._json["create"] == "never"
-        return not self.__create()
+        return self.__tst_val("create", "never")
 
     def __create(self) -> bool:
         return self.__tst_val("create", "always")
+
+    def __reuse(self) -> bool:
+        return self.__tst_val("create", "reuse")
 
     def __debug(self) -> bool:
         return self.__tst_val("debug", True)
@@ -125,6 +127,7 @@ class EnvManager:
         mmb = Mamba()
         env_name = self.name()
         if self.__use_existing_only():
+            logger.info(" ❄️  EXISTING ONLY environment policy. Won't alter anything not already there.")
             logger.info(f" ⌛  Checking for existing [conda] environment {env_name}")
             if not mmb.env_exists(env_name):
                 msg = f" ❌  Required [conda] env {env_name} does not exist"
@@ -145,7 +148,10 @@ class EnvManager:
                     logger.info(f"    📘  {p.name()}=={p.version()}: {p.channel()}")
 
             logger.info(f" 🚀  You are good to go with env {env_name} ")
+        elif self.__reuse():
+            logger.info(" ♻️   REUSE environment policy. Will only alter what needs altering.")
         elif self.__create():
+            logger.info("  🛠️  [RE]CREATE environment policy. Any existing environment will be expunged and a new one create.")
             mmb = Mamba()
             if mmb.env_exists(env_name):
                 pass
@@ -163,6 +169,8 @@ class EnvManager:
                 pass
 
             recipe.create()
+        else:
+            logger.warning("  ⭕ no environment management instructions")
         pass
 
 
@@ -173,7 +181,7 @@ if __name__ == "__main__":
             "name": "htest3_1",
             # "create": "never",
             # "create": "always",
-            "create": "always",
+            "create": "reuse",
             "verify": True,
             "debug": True,
             "recipe": {
