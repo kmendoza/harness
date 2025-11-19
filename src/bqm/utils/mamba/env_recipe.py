@@ -132,6 +132,30 @@ class EnvRecipe:
             else:
                 logger.error(f" ERROR. Unkown channel type: {ch}. This is likely a BUG")
 
+    def verify(self) -> bool:
+        if len(self._all_pkgs) < 1:
+            logger.warning("WARNING. no packages specified. Creating and empty environment")
+        mamba = Mamba()
+        if mamba.env_exists(self._name):
+            logger.warning(f" 💀 WARNING. Deleting existing environment: {self._name}")
+            mamba.remove_env(self._name, waive_safety=True)
+
+        logger.info(f" 🚀 Recreating new empty environment: {self._name}")
+        mamba.create_env(self._name)
+
+        pks_by_channel = self.get_spec_list(check_python=True)
+
+        for ch in ["conda-forge", "pypi"]:
+            if ch not in pks_by_channel:
+                continue
+            spcs = pks_by_channel[ch]
+            if ch == "conda-forge":
+                mamba.install_specs(self._name, spcs, ch)
+            elif ch == "pypi":
+                mamba.pip_install_specs(self._name, spcs)
+            else:
+                logger.error(f" ERROR. Unkown channel type: {ch}. This is likely a BUG")
+
 
 class CondaFileParser:
 

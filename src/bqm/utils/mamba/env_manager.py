@@ -123,11 +123,21 @@ class EnvManager:
         else:
             return None
 
+    def __parse_recipe(self):
+        recipe = EnvRecipe(self.name())
+        conda_env_file = self.__get_conda_file()
+        if conda_env_file:
+            recipe.add_conda_file(conda_env_file)
+        pip_ennv_file = self.__get_reqs_file()
+        if pip_ennv_file:
+            recipe.add_reqs_file(pip_ennv_file)
+        return recipe
+
     def setup(self):
         mmb = Mamba()
         env_name = self.name()
         if self.__use_existing_only():
-            logger.info(" ❄️  EXISTING ONLY environment policy. Won't alter anything not already there.")
+            logger.info(" ❄️  EXISTING ONLY environment policy. Won't alter anything not already there. Ignoring any environment specs provided.")
             logger.info(f" ⌛  Checking for existing [conda] environment {env_name}")
             if not mmb.env_exists(env_name):
                 msg = f" ❌  Required [conda] env {env_name} does not exist"
@@ -150,24 +160,21 @@ class EnvManager:
             logger.info(f" 🚀  You are good to go with env {env_name} ")
         elif self.__reuse():
             logger.info(" ♻️   REUSE environment policy. Will only alter what needs altering.")
+            recipe = self.__parse_recipe()
+            recipe.verify()
         elif self.__create():
             logger.info("  🛠️  [RE]CREATE environment policy. Any existing environment will be expunged and a new one create.")
-            mmb = Mamba()
-            if mmb.env_exists(env_name):
-                pass
-            else:
-                pass
+            # mmb = Mamba()
+            # recipe = EnvRecipe(env_name)
+            # conda_env_file = self.__get_conda_file()
+            # if conda_env_file:
+            #     recipe.add_conda_file(conda_env_file)
+            # pip_ennv_file = self.__get_reqs_file()
+            # if pip_ennv_file:
+            #     recipe.add_reqs_file(pip_ennv_file)
+            #     pass
 
-            # mmb.create_env()
-            recipe = EnvRecipe(env_name)
-            conda_env_file = self.__get_conda_file()
-            if conda_env_file:
-                recipe.add_conda_file(conda_env_file)
-            pip_ennv_file = self.__get_reqs_file()
-            if pip_ennv_file:
-                recipe.add_reqs_file(pip_ennv_file)
-                pass
-
+            recipe = self.__parse_recipe()
             recipe.create()
         else:
             logger.warning("  ⭕ no environment management instructions")
