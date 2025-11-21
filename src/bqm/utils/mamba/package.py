@@ -145,3 +145,6 @@ class PackageList:
             return self._packages[package]
         else:
             raise PackageError(f"Package {package} not present in the pacakge list")
+
+    def packages(self) -> list[Package]:
+        return self._packages.copy()

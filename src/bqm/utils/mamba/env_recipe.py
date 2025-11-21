@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Sequence
 
 import yaml
 
@@ -10,6 +11,25 @@ logger = LogFuzz.make_logger(__name__)
 
 class EnvRecipeError(Exception):
     pass
+
+
+class NotionalPackage:
+    """
+    a simplified encapsulation of a package (name/version)
+    """
+
+    def __init__(self, name: str, ver: str):
+        self._name = name
+        self._ver = ver.split(".")
+
+    def name(self) -> str:
+        return self._name
+
+    def ver(self) -> Sequence[str]:
+        return self._ver
+
+    def __repr__(self) -> str:
+        return f"{self._name}::{'.'.join(self._ver)}"
 
 
 class PackageSpec:
@@ -46,6 +66,9 @@ class PackageSpec:
     def build(self) -> str:
         return self._build
 
+    def notional(self) -> str:
+        return NotionalPackage(name=self._name, ver=self._ver)
+
     def __str__(self) -> str:
         return self.spec()
 
@@ -60,6 +83,43 @@ class PipPackageSpec(PackageSpec):
     def __init__(self, spec: str, channel: str):
         name, ver = spec.split("==")
         PackageSpec.__init__(self, spec, name, ver, None, channel)
+
+
+class EnvironmentCheckeer:
+    """
+    evaluate how well the target envirobnment matches the desired environment
+    by evaluating lists of respective packge names and versions
+    """
+
+    def __init__(
+        self,
+        target: list[NotionalPackage],
+        desired: list[NotionalPackage],
+    ):
+        self._target = {p.name(): p for p in target}
+        self._desired = {p.name(): p for p in desired}
+        self.__analyse()
+        pass
+
+    def target_sufficient(self) -> bool:
+        return False
+
+    def __analyse(self):
+        missing = []
+        installed = {}
+        for n, p in self._desired.items():
+            if n in self._target:
+                des_ver = p.ver()
+                tgt_ver = self._target[n].ver()
+                if des_ver == tgt_ver:
+                    installed[p] = 0
+                elif des_ver < tgt_ver:
+                    installed[p] = 1
+                else:  # des_ver > tgt_ver
+                    installed[p] = -1
+            else:
+                missing.append(n)
+        pass
 
 
 class EnvRecipe:
@@ -133,28 +193,21 @@ class EnvRecipe:
                 logger.error(f" ERROR. Unkown channel type: {ch}. This is likely a BUG")
 
     def verify(self) -> bool:
-        if len(self._all_pkgs) < 1:
-            logger.warning("WARNING. no packages specified. Creating and empty environment")
         mamba = Mamba()
-        if mamba.env_exists(self._name):
-            logger.warning(f" 💀 WARNING. Deleting existing environment: {self._name}")
-            mamba.remove_env(self._name, waive_safety=True)
+        if not mamba.env_exists(self._name):
+            logger.into(f" ⭕ WARNING. Target environment does not exist: {self._name}")
 
-        logger.info(f" 🚀 Recreating new empty environment: {self._name}")
-        mamba.create_env(self._name)
+        logger.info(f" 🚀 Target envionment already exists: {self._name}. Matching!")
 
+        installed_pkgs = mamba.list_packages(self._name).packages()
         pks_by_channel = self.get_spec_list(check_python=True)
 
-        for ch in ["conda-forge", "pypi"]:
-            if ch not in pks_by_channel:
-                continue
-            spcs = pks_by_channel[ch]
-            if ch == "conda-forge":
-                mamba.install_specs(self._name, spcs, ch)
-            elif ch == "pypi":
-                mamba.pip_install_specs(self._name, spcs)
-            else:
-                logger.error(f" ERROR. Unkown channel type: {ch}. This is likely a BUG")
+        ips = [NotionalPackage(n, p.version()) for n, p in installed_pkgs.items()]
+        rps = [NotionalPackage(rp.name(), rp.version()) for rp in self._all_pkgs]
+
+        chcker = EnvironmentCheckeer(ips, rps)
+
+        pass
 
 
 class CondaFileParser:
