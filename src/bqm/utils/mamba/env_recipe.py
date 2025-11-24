@@ -29,7 +29,7 @@ class NotionalPackage:
         return self._ver
 
     def __repr__(self) -> str:
-        return f"{self._name}::{'.'.join(self._ver)}"
+        return f"{self._name}=={'.'.join(self._ver)}"
 
 
 class PackageSpec:
@@ -93,33 +93,44 @@ class EnvironmentCheckeer:
 
     def __init__(
         self,
-        target: list[NotionalPackage],
+        existing: list[NotionalPackage],
         desired: list[NotionalPackage],
     ):
-        self._target = {p.name(): p for p in target}
+        self._existing = {p.name(): p for p in existing}
         self._desired = {p.name(): p for p in desired}
         self.__analyse()
+        self.__plan()
         pass
-
-    def target_sufficient(self) -> bool:
-        return False
 
     def __analyse(self):
-        missing = []
-        installed = {}
+        """
+        check how many packages are missing, now many are matched,
+        how many are behind and how mabn are ahead of what is required
+        """
+        self._missing = {}
+        self._matching = {}
+        self._behind = {}
+        self._ahead = {}
         for n, p in self._desired.items():
-            if n in self._target:
-                des_ver = p.ver()
-                tgt_ver = self._target[n].ver()
-                if des_ver == tgt_ver:
-                    installed[p] = 0
-                elif des_ver < tgt_ver:
-                    installed[p] = 1
+            if n in self._existing:
+                desired_ver = p.ver()
+                existing_version = self._existing[n].ver()
+                if desired_ver == existing_version:
+                    self._matching[n] = p
+                elif desired_ver < existing_version:
+                    self._ahead[n] = p
                 else:  # des_ver > tgt_ver
-                    installed[p] = -1
+                    self._behind[n] = p
             else:
-                missing.append(n)
-        pass
+                self._missing[n] = p
+
+    def __plan(self) -> tuple[list[NotionalPackage], list[NotionalPackage], list[NotionalPackage]]:
+        self._install_packages = [p for _, p in self._missing.items()]
+        self._upgrade_pacakges = [p for _, p in self._behind.items()]
+        self._downgrade_pacakges = [p for _, p in self._ahead.items()]
+
+    def plan(self) -> tuple[list[str], list[str], list[str]]:
+        return self._install_packages, self._upgrade_pacakges, self._downgrade_pacakges
 
 
 class EnvRecipe:
@@ -200,14 +211,25 @@ class EnvRecipe:
         logger.info(f" 🚀 Target envionment already exists: {self._name}. Matching!")
 
         installed_pkgs = mamba.list_packages(self._name).packages()
-        pks_by_channel = self.get_spec_list(check_python=True)
 
         ips = [NotionalPackage(n, p.version()) for n, p in installed_pkgs.items()]
         rps = [NotionalPackage(rp.name(), rp.version()) for rp in self._all_pkgs]
 
-        chcker = EnvironmentCheckeer(ips, rps)
+        checker = EnvironmentCheckeer(ips, rps)
+        install, upgrade, downgrade = checker.plan()
 
-        pass
+        if len(install + upgrade + downgrade) == 0:
+            logger.info(f" 🚀 PERFECT. *All* required packages/versions exist in the target env {self._name}")
+            return True, None
+        elif len(downgrade) > 0:
+            logger.warning(f" ❌ NOPE. packages {downgrade} would need to be downgraded in the target env {self._name}")
+            return False, None
+        elif len(upgrade) > 0:
+            logger.warning(f" ❌ NOPE. packages {upgrade} would need to be upgraded in the target env {self._name}")
+            return True
+        else:
+            logger.info(f" 🛠️  packages {install} need to be installed in the target env {self._name}")
+            return True, install
 
 
 class CondaFileParser:
