@@ -161,7 +161,8 @@ class EnvManager:
         elif self.__reuse():
             logger.info(" ♻️   REUSE environment policy. Will only alter what needs altering.")
             recipe = self.__parse_recipe()
-            recipe.verify()
+            plausibility, missing = recipe.verify()
+            pass
         elif self.__create():
             logger.info("  🛠️  [RE]CREATE environment policy. Any existing environment will be expunged and a new one create.")
             # mmb = Mamba()
@@ -185,7 +186,7 @@ if __name__ == "__main__":
     logger.info("=== START ===")
     env = EnvManager(
         {
-            "name": "htest3_1",
+            "name": "htest3_2",
             # "create": "never",
             # "create": "always",
             "create": "reuse",

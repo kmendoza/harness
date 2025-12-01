@@ -221,15 +221,16 @@ class EnvRecipe:
         if len(install + upgrade + downgrade) == 0:
             logger.info(f" 🚀 PERFECT. *All* required packages/versions exist in the target env {self._name}")
             return True, None
-        elif len(downgrade) > 0:
-            logger.warning(f" ❌ NOPE. packages {downgrade} would need to be downgraded in the target env {self._name}")
-            return False, None
-        elif len(upgrade) > 0:
-            logger.warning(f" ❌ NOPE. packages {upgrade} would need to be upgraded in the target env {self._name}")
-            return True
-        else:
-            logger.info(f" 🛠️  packages {install} need to be installed in the target env {self._name}")
+        elif len(upgrade + downgrade) == 0:
+            logger.info(f" 🛠️  DOABLE. Packages {install} need to be installed in the target env {self._name}")
             return True, install
+        else:
+            if len(downgrade) > 0:
+                logger.warning(f" ❌ NOPE. packages {downgrade} would need to be downgraded in the target env {self._name}")
+            if len(upgrade) > 0:
+                logger.warning(f" ❌ NOPE. packages {upgrade} would need to be upgraded in the target env {self._name}")
+            logger.error(" 💀  CANNOT handle upgrades or downgrades. Force environment re-creation")
+            return False, None
 
 
 class CondaFileParser:
