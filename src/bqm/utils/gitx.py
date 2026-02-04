@@ -329,14 +329,14 @@ class GitRepo:
         """Print formatted repository information"""
         inf = self.info()
         logger.info("+----------------------")
-        logger.info(f"| repo url       : {inf['url']}")
-        logger.info(f"| branch         : {inf['branch']}")
-        logger.info(f"| commit message : {inf['commit_message']}")
-        logger.info(f"| commit hash    : {inf['commit_hash']}")
-        logger.info(f"| commit author  : {inf['author']}")
-        logger.info(f"| commit date    : {inf['commit_date']}")
-        logger.info(f"| dirty          : {inf['is_dirty']}")
-        logger.info(f"| changes        : {inf['untracked_files']}")
+        logger.info(f"| ❄️    repo url       : {inf['url']}")
+        logger.info(f"| ❄️    branch         : {inf['branch']}")
+        logger.info(f"| ❄️    commit message : {inf['commit_message']}")
+        logger.info(f"| ❄️    commit hash    : {inf['commit_hash']}")
+        logger.info(f"| ❄️    commit author  : {inf['author']}")
+        logger.info(f"| ❄️    commit date    : {inf['commit_date']}")
+        logger.info(f"| ❄️    dirty          : {inf['is_dirty']}")
+        logger.info(f"| ❄️    changes        : {inf['untracked_files']}")
         logger.info("+----------------------")
 
 
