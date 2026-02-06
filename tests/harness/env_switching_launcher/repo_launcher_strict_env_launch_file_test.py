@@ -14,7 +14,7 @@ EnvSwitchingRepoLauncher(
             "entry-point": "xyz",
         },
         "env": {
-            "name": "htest3",
+            "name": "htest4",
         },
         "harness": {
             "interface": "0.0.0.0",

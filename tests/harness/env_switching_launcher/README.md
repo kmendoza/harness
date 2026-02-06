@@ -22,7 +22,7 @@ FileLauncher(config="{cfg_file}")
 This is essentially just a launcher switch but after the Repo and Env steps have been performed alreeady.
 
 ----
-#### Environment section of the config
+#### Python Environment section of the config
 ```json
 {
     "env": {
@@ -34,5 +34,13 @@ This is essentially just a launcher switch but after the Repo and Env steps have
 #### Strict mode
 ----
 - specify target environment name
-- if environment exists, swithc the python process to use it and run the rest of the launcher
-- otherwise, exit with an error
+- if target environment exists, switch the python process to run inside the specified environment unchanged and run the rest of the launcher
+- if the specifieed environment does not exist, exit with error
+
+```json
+{
+    "env": {
+        "name": "target_conda_environment",
+    },
+}
+```
