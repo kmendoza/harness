@@ -5,10 +5,10 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from bqm.utils.logconfig import make_logger
+from bqm.utils.logconfig import LogFuzz
 from bqm.utils.mamba.package import PackageList
 
-logger = make_logger(__name__)
+logger = LogFuzz.make_logger(__name__)
 
 
 class MambaError(Exception):
@@ -208,7 +208,7 @@ class Mamba:
         if python_version:
             self.install(env=env, package="python", version=python_version)
 
-    def list_packages(self, env: str):
+    def list_packages(self, env: str) -> PackageList:
         """
         mamba list -n <env>
         """
@@ -226,6 +226,38 @@ class Mamba:
 
         # package_lines = [l.split() for l in res.stdout.split("\n") if l.strip() and not l.strip().startswith("#")]
         # return {l[0]: {"package": l[0], "version": l[1], "build": l[2], "channel": l[3]} for l in package_lines}
+
+    def install_specs(
+        self,
+        env: str,
+        spec: str | list[str],
+        channel: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        mamba install -n <env> -c <channel> [<pacakge>=<version>=<build>]
+        """
+
+        if isinstance(spec, str):
+            spec = [spec]
+
+        if isinstance(spec, list):
+            spec = [str(s) for s in spec]
+
+        pck_spec_str = " ".join(p for p in spec)
+
+        channel = f"-c {channel}" if channel else ""
+        cmd = f"install -n {env} {channel} {pck_spec_str} -y  --json"
+
+        res = self.__mamba_exec(cmd)
+
+        if res.returncode != 0:
+            logger.error(res.stderr)
+            raise MambaError(f"Error during pakcage install command: {cmd}")
+        else:
+            self._last_install_log = json.loads(res.stdout)
+            if not self._last_install_log["success"]:
+                raise MambaError(f"Error during MAMBA pakcage install command: {cmd}")
+            return self._last_install_log
 
     def install(
         self,
@@ -299,9 +331,7 @@ class Mamba:
         version: str | list[str] | None = None,
         index_url: str | None = None,
     ) -> str:
-        """
-        mamba install -n <env> -c <channel> [<pacakge>=<version>_<build>]
-        """
+        """ """
 
         def mk_pkg_str(pspec: tuple[str, str]) -> str:
             ver_str = f"=={pspec[1]}" if pspec[1] else ""
@@ -316,6 +346,41 @@ class Mamba:
 
         pspecs = self.__line_up_packagespecs(package, version, None)
         pck_spec_str = " ".join(mk_pkg_str(p) for p in pspecs)
+
+        pkg_index = f"--index-url {index_url}" if index_url else ""
+
+        cmd = f"install {pkg_index} {pck_spec_str} "
+
+        res = self.__pip_exec(cmd, env)
+
+        if res.returncode != 0:
+            logger.error(res.stderr)
+            raise MambaError(f"Error during PIP pakcage install command: {cmd}")
+        else:
+            return res.stdout
+
+    def pip_install_specs(
+        self,
+        env: str,
+        spec: str | list[str],
+        index_url: str | None = None,
+    ) -> dict[str, Any]:
+        """ """
+
+        if isinstance(spec, str):
+            spec = [spec]
+
+        if isinstance(spec, list):
+            spec = [str(s) for s in spec]
+
+        pck_spec_str = " ".join(p for p in spec)
+
+        if not self.env_exists(env):
+            raise MambaError(f"Target environment {env} does NOT exist")
+
+        installed = self.list_packages(env)
+        if "pip" not in installed.all():
+            raise MambaError(f"Target environment {env} does not have pip installed. Install first.")
 
         pkg_index = f"--index-url {index_url}" if index_url else ""
 

@@ -5,9 +5,9 @@ from typing import Any
 
 import git
 
-from bqm.utils.logconfig import make_logger
+from bqm.utils.logconfig import LogFuzz
 
-logger = make_logger(__name__)
+logger = LogFuzz.make_logger(__name__)
 
 
 class GitOperatorError(Exception):
@@ -39,7 +39,7 @@ class GitRepo:
         if self._force_offline:
             self._repo = self.get_offline_repo()
             logger.info(
-                f"🚀  Using a local clone of repo: {self._repo_url}. Commit: {self._repo.head.commit.hexsha[:8]} - {self._repo.head.commit.message.strip()}"
+                f"🚀  FORCEDly Using a local clone of repo: {self._repo_url}. Commit: {self._repo.head.commit.hexsha[:8]} - {self._repo.head.commit.message.strip()}"
             )
         elif not self.__check_connection() and self._offline_ok:
             self._repo = self.get_offline_repo()
@@ -329,14 +329,14 @@ class GitRepo:
         """Print formatted repository information"""
         inf = self.info()
         logger.info("+----------------------")
-        logger.info(f"| repo url       : {inf['url']}")
-        logger.info(f"| branch         : {inf['branch']}")
-        logger.info(f"| commit message : {inf['commit_message']}")
-        logger.info(f"| commit hash    : {inf['commit_hash']}")
-        logger.info(f"| commit author  : {inf['author']}")
-        logger.info(f"| commit date    : {inf['commit_date']}")
-        logger.info(f"| dirty          : {inf['is_dirty']}")
-        logger.info(f"| changes        : {inf['untracked_files']}")
+        logger.info(f"| ❄️    repo url       : {inf['url']}")
+        logger.info(f"| ❄️    branch         : {inf['branch']}")
+        logger.info(f"| ❄️    commit message : {inf['commit_message']}")
+        logger.info(f"| ❄️    commit hash    : {inf['commit_hash']}")
+        logger.info(f"| ❄️    commit author  : {inf['author']}")
+        logger.info(f"| ❄️    commit date    : {inf['commit_date']}")
+        logger.info(f"| ❄️    dirty          : {inf['is_dirty']}")
+        logger.info(f"| ❄️    changes        : {inf['untracked_files']}")
         logger.info("+----------------------")
 
 

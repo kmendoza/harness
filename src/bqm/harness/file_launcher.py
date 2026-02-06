@@ -7,9 +7,9 @@ from bqm.harness.launcher import Launcher
 from bqm.utils.entry.runner import EntryPointScanner
 from bqm.utils.entry.wrapper import CallableWrapper
 from bqm.utils.gitx import GitRepo
-from bqm.utils.logconfig import init_logging, make_logger
+from bqm.utils.logconfig import LogFuzz
 
-logger = make_logger(__name__)
+logger = LogFuzz.make_logger(__name__)
 
 
 class CallableFileLauncherClassError(Exception):
@@ -52,7 +52,9 @@ class CallableFileLauncherClass(type):
         conf = ServiceConfig.get_config(config)
 
         if "logging" in conf:
-            init_logging(conf["logging"])
+            LogFuzz.init_logging(conf["logging"])
+        else:
+            LogFuzz.init_logging_default()
 
         # check out the repo
         if "source" not in conf:
